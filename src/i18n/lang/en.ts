@@ -54,6 +54,9 @@ export default {
     postsTitle: "Posts",
     postsDesc: "All the articles I've posted.",
 
+    projectsTitle: "Projects",
+    projectsDesc: "Things I've built, and what I learned building them.",
+
     archivesTitle: "Archives",
     archivesDesc: "All the articles I've archived.",
 

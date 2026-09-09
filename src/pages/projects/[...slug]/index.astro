@@ -1,0 +1,123 @@
+---
+import { type CollectionEntry, getCollection, render } from "astro:content";
+import ProjectLayout from "@/layouts/ProjectLayout.astro";
+import Header from "@/components/Header.astro";
+import Breadcrumb from "@/components/Breadcrumb.astro";
+import Main from "@/components/Main.astro";
+import Footer from "@/components/Footer.astro";
+import { getProjectSlug, getProjectUrl } from "@/utils/getProjectPaths";
+import { getSortedProjects } from "@/utils/getSortedProjects";
+import config from "@/config";
+
+export async function getStaticPaths() {
+  const projects = getSortedProjects(await getCollection("projects"));
+
+  return projects.map(project => ({
+    params: { slug: getProjectSlug(project.id) },
+    props: { project },
+  }));
+}
+
+type Props = { project: CollectionEntry<"projects"> };
+
+const { project } = Astro.props;
+const locale = Astro.currentLocale ?? config.site.lang;
+
+const {
+  title,
+  description,
+  author,
+  status,
+  repo,
+  url,
+  tech,
+  pubDatetime,
+  modDatetime,
+  ogImage: initOgImage,
+  canonicalURL,
+} = project.data;
+
+const { Content } = await render(project);
+
+// Same resolution order as posts: an explicit image wins, otherwise fall back
+// to the one generated for this project at build time.
+let ogImageUrl: string | undefined;
+if (typeof initOgImage === "string") {
+  ogImageUrl = initOgImage;
+} else if (initOgImage?.src) {
+  ogImageUrl = initOgImage.src;
+}
+if (!ogImageUrl && config.features.dynamicOgImage) {
+  const projectUrl = getProjectUrl(project.id, locale).replace(/\/+$/, "");
+  ogImageUrl = `${projectUrl}/index.png`;
+}
+const ogImage = ogImageUrl
+  ? new URL(ogImageUrl, Astro.url.origin).href
+  : undefined;
+
+const meta = [status, ...tech].filter(Boolean);
+---
+
+<ProjectLayout
+  title={`${title} | ${config.site.title}`}
+  name={title}
+  {description}
+  {author}
+  {ogImage}
+  {canonicalURL}
+  {repo}
+  {url}
+  {pubDatetime}
+  {modDatetime}
+>
+  <Header />
+
+  <Breadcrumb currentLabel={title} />
+
+  <Main pageTitle={title} class="app-prose">
+    {
+      /*
+      Status, stack and links live in frontmatter rather than in the prose, so
+      they stay machine-readable for the structured data and cannot drift out
+      of step with the card on the index.
+    */
+    }
+    {
+      (meta.length > 0 || repo || url) && (
+        <div class="not-prose border-border mb-8 border-b pb-4 text-sm">
+          {meta.length > 0 && (
+            <p class="text-muted-foreground">{meta.join(" · ")}</p>
+          )}
+          {(repo || url) && (
+            <p class="mt-2 flex flex-wrap gap-x-4">
+              {repo && (
+                <a
+                  href={repo}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                  class="hover:text-accent underline decoration-dashed underline-offset-4"
+                >
+                  Source on GitHub
+                </a>
+              )}
+              {url && (
+                <a
+                  href={url}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                  class="hover:text-accent underline decoration-dashed underline-offset-4"
+                >
+                  Live site
+                </a>
+              )}
+            </p>
+          )}
+        </div>
+      )
+    }
+
+    <Content />
+  </Main>
+
+  <Footer />
+</ProjectLayout>

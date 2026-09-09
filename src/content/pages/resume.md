@@ -1,6 +1,6 @@
 ---
 title: "Resume"
-description: "Levi Braga's resume — view it in the browser or download the PDF."
+description: "Levi Maia Braga's resume — view it in the browser or download the PDF."
 ---
 
 Last updated: **September 9, 2026**
@@ -18,7 +18,7 @@ Last updated: **September 9, 2026**
 <!-- Download link goes first on purpose: mobile browsers routinely refuse to
      render a PDF inline and show nothing, so it must not depend on the viewer. -->
 
-<object data="/levi-braga-resume.pdf" type="application/pdf" width="100%" height="900" aria-label="Resume of Levi Braga" class="not-prose my-6 hidden rounded border sm:block">
+<object data="/levi-braga-resume.pdf" type="application/pdf" width="100%" height="900" aria-label="Resume of Levi Maia Braga" class="not-prose my-6 hidden rounded border sm:block">
   <p>Your browser cannot display PDFs inline. <a href="/levi-braga-resume.pdf">Download the resume instead.</a></p>
 </object>
 

@@ -1,0 +1,41 @@
+---
+import type { CollectionEntry } from "astro:content";
+import { getProjectUrl } from "@/utils/getProjectPaths";
+import { toTransitionName } from "@/utils/toTransitionName";
+
+type Props = {
+  variant?: "h2" | "h3";
+} & CollectionEntry<"projects">;
+
+const { variant: Heading = "h2", id, data } = Astro.props;
+
+const { title, description, summary, status, tech } = data;
+
+// The index shows `summary` when there is one; `description` is written for
+// search results and social cards, and is the fallback rather than the default.
+const blurb = summary ?? description;
+
+// Status and stack read as one quiet line under the title.
+const meta = [status, ...tech].filter(Boolean);
+---
+
+<li class="my-6">
+  <a
+    href={getProjectUrl(id, Astro.currentLocale)}
+    class:list={[
+      "text-accent inline-block text-lg font-medium",
+      "decoration-dashed underline-offset-4 hover:underline",
+      "focus-visible:no-underline focus-visible:underline-offset-0",
+    ]}
+  >
+    <Heading transition:name={toTransitionName(id)}>
+      {title}
+    </Heading>
+  </a>
+  {
+    meta.length > 0 && (
+      <p class="text-muted-foreground text-sm">{meta.join(" · ")}</p>
+    )
+  }
+  <p>{blurb}</p>
+</li>

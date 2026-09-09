@@ -1,0 +1,42 @@
+---
+import { getCollection } from "astro:content";
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Breadcrumb from "@/components/Breadcrumb.astro";
+import Main from "@/components/Main.astro";
+import ProjectCard from "@/components/ProjectCard.astro";
+import Footer from "@/components/Footer.astro";
+import { getSortedProjects } from "@/utils/getSortedProjects";
+import { useTranslations } from "@/i18n";
+import config from "@/config";
+
+const projects = getSortedProjects(await getCollection("projects"));
+
+const locale = Astro.currentLocale ?? config.site.lang;
+const t = useTranslations(locale);
+---
+
+{
+  /*
+  Deliberately not paginated, unlike the post list. A projects index is not a
+  feed; it stays short by nature, and splitting three entries across pages
+  would hide things behind a click for no reason. Add pagination the day this
+  actually runs long.
+*/
+}
+<Layout
+  title={`${t.pages.projectsTitle} | ${config.site.title}`}
+  description={t.pages.projectsDesc}
+>
+  <Header />
+
+  <Breadcrumb />
+
+  <Main pageTitle={t.pages.projectsTitle} pageDesc={t.pages.projectsDesc}>
+    <ul>
+      {projects.map(project => <ProjectCard {...project} />)}
+    </ul>
+  </Main>
+
+  <Footer />
+</Layout>

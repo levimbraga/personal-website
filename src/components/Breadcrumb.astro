@@ -4,6 +4,19 @@ import { stripBase, stripLocale } from "@/utils/withBase";
 import { useTranslations } from "@/i18n";
 import config from "@/config";
 
+type Props = {
+  /**
+   * Label for the final crumb, replacing the URL slug.
+   *
+   * Slugs are lowercase by necessity; names are not. Without this, a project
+   * at /projects/serpvive/ breadcrumbs as "serpvive" and misspells the thing
+   * the page is about.
+   */
+  currentLabel?: string;
+};
+
+const { currentLabel } = Astro.props;
+
 const locale = Astro.currentLocale ?? config.site.lang;
 const t = useTranslations(locale);
 
@@ -74,11 +87,17 @@ if (breadcrumbList[0] === "tags" && !isNaN(Number(breadcrumbList[2]))) {
         index + 1 === breadcrumbList.length ? (
           <li>
             <span
-              class:list={["capitalize opacity-75", { lowercase: index > 0 }]}
+              class:list={[
+                "opacity-75",
+                { capitalize: !currentLabel },
+                /* make the last part lowercase in Home > Tags > some-tag */
+                { lowercase: index > 0 && !currentLabel },
+              ]}
               aria-current="page"
             >
-              {/* make the last part lowercase in Home > Tags > some-tag */}
-              {navLabels[breadcrumb] ?? decodeSegment(breadcrumb)}
+              {currentLabel ??
+                navLabels[breadcrumb] ??
+                decodeSegment(breadcrumb)}
             </span>
           </li>
         ) : (

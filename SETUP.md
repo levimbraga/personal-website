@@ -4,9 +4,11 @@ Everything needed to run this site, publish to it, and keep it indexed.
 
 - [Running locally](#running-locally)
 - [Adding a post](#adding-a-post)
+- [Adding a project](#adding-a-project)
 - [Editing the standalone pages](#editing-the-standalone-pages)
 - [Publishing](#publishing)
 - [Deploying to Cloudflare Pages](#deploying-to-cloudflare-pages)
+- [Cloudflare: turn off Email Address Obfuscation](#cloudflare-turn-off-email-address-obfuscation)
 - [Google Search Console](#google-search-console)
 - [Submitting the sitemap](#submitting-the-sitemap)
 - [Licence](#licence)
@@ -112,15 +114,65 @@ the HTML as text, so a crawler with no JavaScript still reads the labels.
 
 ---
 
+## Adding a project
+
+Projects work exactly like posts: a Markdown file per project in
+**`src/content/projects/`**, a generated index at `/projects/`, and a detail
+page at `/projects/<slug>/`. Adding one is adding a file — no route, no
+component, no nav change.
+
+```bash
+cp src/content/projects/_template.md src/content/projects/ds-kit.md
+```
+
+### Frontmatter
+
+```yaml
+---
+title: "ds-kit"                       # required
+description: "..."                    # required — meta description and social card
+summary: "..."                        # optional — the line shown on the index
+pubDatetime: 2026-10-01T09:00:00Z     # required — sorts the index, newest first
+modDatetime: 2026-10-14T09:00:00Z     # optional
+status: "In progress"                 # optional — shown next to the stack
+repo: "https://github.com/..."        # optional — renders a link, and becomes
+                                      #   codeRepository in the structured data
+url: "https://..."                    # optional — live deployment
+tech: [TypeScript, Postgres]          # optional — shown as a "·"-separated line
+featured: true                        # optional — pins to the top of the index
+draft: true                           # optional — no page, no sitemap entry
+---
+```
+
+`summary` and `description` are separate on purpose. The index wants a line
+that reads well beside its siblings; the meta description has to stand alone in
+a search result. When `summary` is absent the index falls back to
+`description`.
+
+### What you get for free
+
+- A card on `/projects/`, ordered by `featured` then by last touched.
+- `/projects/<slug>/` with the breadcrumb showing the project's real name
+  rather than its slug.
+- A sitemap entry and a correct canonical URL.
+- A generated Open Graph image at `/projects/<slug>/index.png`, unless you set
+  `ogImage` yourself.
+- `SoftwareSourceCode` structured data when `repo` is set, `CreativeWork` when
+  it is not — the more specific type is only claimed when there is a repository
+  to point at.
+
+Keep the files flat in `src/content/projects/`. The slug is the filename, and
+subdirectories are not turned into URL segments the way they are for posts.
+
 ## Editing the standalone pages
 
-Projects, Resume and Contact are **content**, not code. Edit the Markdown in
+Resume and Contact are **content**, not code. Edit the Markdown in
 `src/content/pages/`; the matching `.astro` file in `src/pages/` is just the
-route and rarely needs touching.
+route and rarely needs touching. Projects are their own collection — see
+[Adding a project](#adding-a-project).
 
 | Page | File |
 |---|---|
-| `/projects/` | `src/content/pages/projects.md` |
 | `/resume/` | `src/content/pages/resume.md` |
 | `/contact/` | `src/content/pages/contact.md` |
 
@@ -356,6 +408,30 @@ curl -sI https://levimbraga.dev | grep -i strict-transport   # expect a max-age
 
 ---
 
+## Cloudflare: turn off Email Address Obfuscation
+
+Cloudflare's **Email Address Obfuscation** rewrites `mailto:` links in proxied
+HTML into an encoded blob that a script decodes in the browser. When it does
+not decode, the link points at a Cloudflare interstitial
+(`/cdn-cgi/l/email-protection`) instead of opening a mail client, and anyone
+copying the address gets the encoded text rather than the address.
+
+**Where:** dashboard → select `levimbraga.dev` → **Scrape Shield** →
+**Email Address Obfuscation** → off. Cloudflare has been consolidating these
+settings, so on a newer dashboard look under **Security → Settings** and search
+for "email obfuscation"; it is the same switch. Purge the cache afterwards
+(**Caching → Configuration → Purge Everything**) or the old HTML keeps serving.
+
+**Why off rather than scoped to one page:** the address is in the footer, so it
+is on *every* page of this site, not only `/contact/`. A Configuration Rule
+limited to a path would leave it broken everywhere else. The protection is also
+worth little now — scrapers run JavaScript, and harvested-address spam comes
+mostly from breaches and lists rather than from parsing HTML — while the cost is
+paid by every real visitor who clicks or copies.
+
+If the address ever does start attracting spam, the useful answers are an alias
+that can be rotated or a contact form, not obfuscation.
+
 ## Google Search Console
 
 Without Search Console there is no way to know what ranks, what Google has
@@ -457,5 +533,5 @@ Two different things live in this repository under two different terms.
   obligation. The footer also credits the theme, which is courtesy rather than
   a requirement.
 - **The written content** — everything in `src/content/`, including all blog
-  posts and pages — is mine, © Levi Braga, and is not covered by that MIT
+  posts and pages — is mine, © Levi Maia Braga, and is not covered by that MIT
   licence.

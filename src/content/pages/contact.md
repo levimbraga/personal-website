@@ -1,6 +1,6 @@
 ---
 title: "Contact"
-description: "How to reach Levi Braga — email, GitHub, LinkedIn, X, Reddit and LeetCode."
+description: "How to reach Levi Maia Braga — email, GitHub, LinkedIn, X, Reddit and LeetCode."
 ---
 
 Everything in one place.

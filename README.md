@@ -25,5 +25,5 @@ Google Search Console setup.
 The theme is [AstroPaper](https://github.com/satnaing/astro-paper) by Sat Naing,
 MIT licensed; see [LICENSE](LICENSE), which stays as-is.
 
-The written content in `src/content/` — the posts and pages — is © Levi Braga
+The written content in `src/content/` — the posts and pages — is © Levi Maia Braga
 and is not covered by that licence.

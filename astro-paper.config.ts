@@ -3,8 +3,8 @@ import { defineAstroPaperConfig } from "./src/types/config";
 export default defineAstroPaperConfig({
   site: {
     url: "https://levimbraga.dev/",
-    title: "Levi Braga",
-    author: "Levi Braga",
+    title: "Levi Maia Braga",
+    author: "Levi Maia Braga",
     description:
       "CS student and backend developer. I write about what I build, what I measure, and the conclusions I had to retract.",
     profile: "https://www.linkedin.com/in/levimbraga/",

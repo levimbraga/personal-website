@@ -1,6 +1,6 @@
 ---
 title: Post title goes here
-author: Levi Braga
+author: Levi Maia Braga
 pubDatetime: 2026-01-01T09:00:00Z
 modDatetime:
 slug: post-title-goes-here

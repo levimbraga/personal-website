@@ -1,9 +1,17 @@
 ---
-title: "Projects"
-description: "SerpVive — a content decay monitor that separates deterministic scoring from LLM judgement, with a four-provider failover chain and a fault-tolerant ingestion pipeline."
+title: "SerpVive"
+description: "A content decay monitor that separates deterministic scoring from LLM judgement, with a four-provider failover chain and a fault-tolerant ingestion pipeline."
+summary: "A content decay monitor for blogs. Deterministic scoring finds the pages losing traffic; a four-provider LLM chain diagnoses why, grounded in the live SERP."
+pubDatetime: 2026-03-07T21:34:05-03:00
+modDatetime: 2026-08-20T00:00:00-03:00
+status: "Paused since April 2026"
+repo: "https://github.com/levimbraga/serpvive"
+tech:
+  - Next.js
+  - TypeScript
+  - PostgreSQL/Supabase
+  - Vercel
 ---
-
-## SerpVive
 
 **A content decay monitor for blogs.** It connects to Google Search Console,
 detects which pages are losing organic traffic using a deterministic scoring
@@ -11,12 +19,9 @@ engine, and then — only for the one step that genuinely needs judgement — us
 language model to diagnose _why_, grounded in the live search results and the
 page's actual content.
 
-[Source on GitHub](https://github.com/levimbraga/serpvive) · Next.js, TypeScript,
-PostgreSQL/Supabase, Vercel · Paused since April 2026
-
 ![A SerpVive diagnosis: content analysis grounded in the live SERP, with topic coverage scoring and per-cause evidence](@/assets/images/serpvive-diagnosis.png)
 
-### The problem, and where I drew the line
+## The problem, and where I drew the line
 
 Bloggers and SEO consultants find decaying content by exporting Search Console
 data into spreadsheets and eyeballing the deltas, page by page, month after
@@ -34,7 +39,7 @@ subtraction.
 
 ---
 
-### The scoring engine is deterministic on purpose
+## The scoring engine is deterministic on purpose
 
 Everything in `src/lib/engine/` is pure arithmetic. No model is involved at any
 point.
@@ -67,7 +72,7 @@ action.
 
 ---
 
-### A four-provider failover chain across three external APIs
+## A four-provider failover chain across three external APIs
 
 Diagnosis calls run through a chain of four models spanning three separate
 providers. The ordering is not arbitrary — it escalates by blast radius, from
@@ -111,7 +116,7 @@ pipeline logs are where those two episodes are recorded.
 
 ---
 
-### A pipeline that expects malformed output
+## A pipeline that expects malformed output
 
 Language models return broken JSON in predictable ways, so the pipeline repairs
 before it rejects. Every step below is a real branch in `json-extract.ts` and
@@ -160,7 +165,7 @@ is the fix.
 
 ---
 
-### Schema and data
+## Schema and data
 
 - **13 tables in PostgreSQL** (Supabase), with **row-level security on every
   one**. The service role used by crons and webhooks bypasses RLS deliberately;
@@ -169,7 +174,7 @@ is the fix.
 - **42,784 Search Console query rows ingested**, across 188 real monitored
   pages. One site alone accounts for roughly 22,000 rows in `page_queries`.
 
-### Instrumentation and cost control
+## Instrumentation and cost control
 
 Every AI call logs `tokens_input`, `tokens_output`, `cost_usd` and
 `processing_time_ms` to the database. That is not decoration — it is the input
@@ -199,7 +204,7 @@ ranking competitors, and generates up to 8,192 output tokens before validation.
 
 ---
 
-### The decision I defend most
+## The decision I defend most
 
 **The architecture and the complete SQL schema were specified before the first
 line of application code.** The initial commit contains eleven project
@@ -211,7 +216,7 @@ Over **300+ commits later, the system still matches its day-one architecture
 document.** That is the claim I would most want tested, and it is the one most
 easily checked: the first commit is in the history, and so is everything since.
 
-### On how it was built
+## On how it was built
 
 > Built with heavy AI assistance, before I decided to learn properly. It works,
 > it runs unattended in production, and the decision to keep it here is part of
@@ -223,7 +228,7 @@ What I can defend is every decision on this page — each has a reason I can
 reconstruct, and several exist only because something broke in production and
 had to be understood.
 
-### What is not done
+## What is not done
 
 No automated tests and no CI — the project's biggest gap. No paying users.
 Monetisation is integrated and switched off. Alerting is detected and logged but
