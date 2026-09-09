@@ -1,6 +1,6 @@
 ---
-title: "Links"
-description: "Every place to find Levi Braga online — GitHub, LinkedIn, X, email, Reddit and LeetCode."
+title: "Contact"
+description: "How to reach Levi Braga — email, GitHub, LinkedIn, X, Reddit and LeetCode."
 ---
 
 Everything in one place.

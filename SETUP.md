@@ -114,21 +114,29 @@ the HTML as text, so a crawler with no JavaScript still reads the labels.
 
 ## Editing the standalone pages
 
-About, Projects, Resume, Links and Now are **content**, not code. Edit the
-Markdown in `src/content/pages/`; the matching `.astro` file in `src/pages/` is
-just the route and rarely needs touching.
+Projects, Resume and Contact are **content**, not code. Edit the Markdown in
+`src/content/pages/`; the matching `.astro` file in `src/pages/` is just the
+route and rarely needs touching.
 
 | Page | File |
 |---|---|
-| `/about/` | `src/content/pages/about.md` |
 | `/projects/` | `src/content/pages/projects.md` |
 | `/resume/` | `src/content/pages/resume.md` |
-| `/links/` | `src/content/pages/links.md` |
-| `/now/` | `src/content/pages/now.md` |
+| `/contact/` | `src/content/pages/contact.md` |
 
-Two of these carry a visible date — `/resume/` and `/now/`. **Update the date
-in the file whenever you change the content.** A `/now` page with a stale date
-is worse than none, because it actively misinforms.
+The home page is the exception: its intro copy lives directly in
+`src/pages/index.astro`, not in a Markdown file, because it is the one page
+whose layout is not a generic content shell.
+
+`/resume/` carries a visible date. **Update it whenever you change the PDF** —
+a date that no longer matches the file it describes is worse than no date.
+
+Adding a page means creating both halves: a `.md` in `src/content/pages/` and a
+route in `src/pages/` (copy an existing one, change the `getEntry` key), then a
+nav entry in `src/components/Header.astro` with its label in
+`src/i18n/lang/en.ts`. Removing one means deleting both halves and the nav
+entry — a leftover route with no content entry fails the build, which is the
+intended behaviour.
 
 To replace the résumé, overwrite `public/levi-braga-resume.pdf` (keep the
 filename so existing links survive) and update the date line in `resume.md`.

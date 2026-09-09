@@ -3,12 +3,10 @@ export interface UIStrings {
     home: string;
     posts: string;
     tags: string;
-    about: string;
-    projects: string;
     blog: string;
+    projects: string;
     resume: string;
-    links: string;
-    now: string;
+    contact: string;
     archives: string;
     search: string;
   };

@@ -5,14 +5,13 @@ export default {
     home: "Home",
     posts: "Posts",
     tags: "Tags",
-    about: "About",
-    projects: "Projects",
     // Labelled "Blog" in the nav, but the route stays /posts/ — the URLs were
     // fixed before launch and are not worth breaking for a word.
     blog: "Blog",
+    projects: "Projects",
     resume: "Resume",
-    links: "Links",
-    now: "Now",
+    // Labelled "Contact"; the route is /contact/.
+    contact: "Contact",
     archives: "Archives",
     search: "Search",
   },

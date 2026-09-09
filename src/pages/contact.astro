@@ -7,11 +7,11 @@ import Main from "@/components/Main.astro";
 import Footer from "@/components/Footer.astro";
 import config from "@/config";
 
-const page = await getEntry("pages", "links");
+const page = await getEntry("pages", "contact");
 
 if (!page) {
   throw new Error(
-    "Missing content entry: `links.md` or `links.mdx` in `src/content/pages/`"
+    "Missing content entry: `contact.md` or `contact.mdx` in `src/content/pages/`"
   );
 }
 

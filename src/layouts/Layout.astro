@@ -1,7 +1,6 @@
 ---
 import { Font } from "astro:assets";
 import { ClientRouter } from "astro:transitions";
-import { getRelativeLocaleUrl } from "astro:i18n";
 import { resolveDefaultOgImagePath } from "@/utils/resolveDefaultOgImagePath";
 import { getAssetPath } from "@/utils/withBase";
 import config from "@/config";
@@ -34,10 +33,10 @@ const {
 } = Astro.props;
 
 const socialImageURL = new URL(ogImage, Astro.site ?? Astro.url);
-const rssHref = getRelativeLocaleUrl(
-  Astro.currentLocale ?? config.site.lang,
-  "rss.xml"
-);
+// getAssetPath, not getRelativeLocaleUrl: the locale helper appends a trailing
+// slash and would advertise /rss.xml/, which does not exist. Autodiscovery is
+// how feed readers find the feed at all, so a 404 here is silent and total.
+const rssHref = getAssetPath("rss.xml");
 ---
 
 <!doctype html>

@@ -10,6 +10,7 @@ import Socials from "@/components/Socials.astro";
 import Card from "@/components/Card.astro";
 import LinkButton from "@/components/LinkButton.astro";
 import { getSortedPosts } from "@/utils/getSortedPosts";
+import { getAssetPath } from "@/utils/withBase";
 import { useTranslations } from "@/i18n";
 import config from "@/config";
 
@@ -23,6 +24,16 @@ const sortedPosts = getSortedPosts(posts);
 const featuredPosts = sortedPosts.filter(({ data }) => data.featured);
 const recentPosts = sortedPosts.filter(({ data }) => !data.featured);
 const homePath = getRelativeLocaleUrl(locale, "");
+
+// Inline prose links: the theme's own hero link styling, kept in one place so
+// the five links in the intro cannot drift apart.
+const inlineLink =
+  "hover:text-accent underline decoration-dashed underline-offset-4";
+
+// getRelativeLocaleUrl appends a trailing slash, which turns rss.xml into the
+// non-existent /rss.xml/. getAssetPath is the helper for files: it applies the
+// base path without forcing a trailing slash.
+const rssUrl = getAssetPath("rss.xml");
 
 /**
  * Person structured data.
@@ -63,7 +74,21 @@ const personStructuredData = {
     data-home-path={homePath}
     class="app-layout my-1"
   >
-    <section id="hero" class="border-border border-b pt-8 pb-6">
+    {
+      /*
+      The bottom border only earns its place when there is a posts section
+      below it. With an empty blog the sign-off's own top border sits directly
+      underneath, and the two render as a double rule. The theme already gates
+      the featured section's border the same way.
+    */
+    }
+    <section
+      id="hero"
+      class:list={[
+        "border-border pt-8 pb-6",
+        { "border-b": sortedPosts.length > 0 },
+      ]}
+    >
       <h1 class="my-4 inline-block text-4xl font-bold sm:my-8 sm:text-5xl">
         Levi Braga
       </h1>
@@ -82,16 +107,37 @@ const personStructuredData = {
         <span class="sr-only">RSS Feed</span>
       </a>
 
-      <p>{config.site.description}</p>
+      <p>
+        I'm a computer science student in São Paulo, Brazil. I'm interested in
+        backend systems, Python, Linux, databases, developer tools, and the
+        offensive side of security.
+      </p>
 
-      {
-        /* WRITE ME — one short paragraph, two or three sentences.
-          This is the first thing a stranger reads and the only prose Google
-          has for the home page, so say what you work on and what someone
-          will find here. Delete this comment when you replace the line. */
-      }
-      <p class="mt-2">
-        <em>[Add a sentence or two here about what you're working on.]</em>
+      <p class="mt-4">
+        What I like most are tools that take something ugly and complicated and
+        hand it to you as three clean lines. Stripe did it for payments, Sentry
+        for knowing why your app broke. That shape is what I want to build.
+      </p>
+
+      <p class="mt-4">
+        Right now I'm working through data structures and algorithms every day,
+        and planning <a href="https://ormaos.com" class={inlineLink}>Ormaos</a>,
+        a tool for understanding what happens inside a Python execution.
+      </p>
+
+      <p class="mt-4">
+        This site is where I write things down. Mostly what I build and what I
+        measure, sometimes what I got wrong and had to correct.
+      </p>
+
+      <p class="mt-4">
+        Feel free to check out my <a
+          href={getRelativeLocaleUrl(locale, "projects")}
+          class={inlineLink}>projects</a
+        > and my <a
+          href={getRelativeLocaleUrl(locale, "posts")}
+          class={inlineLink}>blog posts</a
+        >. There's an <a href={rssUrl} class={inlineLink}>RSS feed</a> too!
       </p>
       {
         socials.length > 0 && (
@@ -151,6 +197,23 @@ const personStructuredData = {
         </div>
       )
     }
+
+    {
+      /*
+      Page sign-off. Sits at the end of <main> rather than directly under the
+      intro so it still closes the page once there are posts above it.
+
+      The backslash in the kaomoji is literal here — this is an Astro HTML
+      template, not Markdown, so it needs no escaping. The "<3" does: written
+      raw it would start a tag. It is `&lt;3` in the source and renders as <3.
+    */
+    }
+    <div class="border-border mt-12 border-t pt-10 pb-6 text-center">
+      <p class="text-muted-foreground font-app text-4xl sm:text-5xl">\(^o^)/</p>
+      <p class="text-muted-foreground mt-4 text-sm">
+        thanks for stopping by &lt;3
+      </p>
+    </div>
   </main>
   <Footer />
 </Layout>
