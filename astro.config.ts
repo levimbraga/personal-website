@@ -26,7 +26,12 @@ export default defineConfig({
     mdx(),
     sitemap({
       filter: page =>
-        config.features?.showArchives !== false || !page.endsWith("/archives/"),
+        // /straw-hat/ is unlisted on purpose: no nav entry, no sitemap entry,
+        // no search index. It is not disallowed in robots.txt though — finding
+        // it is the point, and blocking it would only advertise it.
+        !page.endsWith("/straw-hat/") &&
+        (config.features?.showArchives !== false ||
+          !page.endsWith("/archives/")),
     }),
   ],
   i18n: {

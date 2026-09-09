@@ -1,0 +1,60 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import config from "@/config";
+
+/**
+ * Unlisted on purpose.
+ *
+ *  - Not in the nav (Header.astro never links it).
+ *  - Not in the sitemap (filtered out in astro.config.ts).
+ *  - Not in the search index (data-pagefind-ignore below).
+ *  - Not disallowed in robots.txt — a Disallow line is a public list of the
+ *    things you are hiding, which is the opposite of what this wants.
+ *
+ * This file is listed in .prettierignore. ASCII art is whitespace-significant
+ * and the formatter reflows it, so the whole file is kept out of its way.
+ */
+---
+
+<Layout
+  title={`Straw Hat | ${config.site.title}`}
+  description="An unlisted page."
+>
+  <Header />
+
+  <main
+    id="main-content"
+    class="app-layout flex flex-1 flex-col items-center justify-center py-16"
+    data-pagefind-ignore
+  >
+    {/*
+      ──────────────────────────────────────────────────────────────────────
+      THE ART GOES HERE — paste it between the <pre> tags below, replacing
+      this comment.
+
+      Two rules when pasting:
+
+        1. Escape every `\` as `\\`, and every `{` or `}` as `&#123;` /
+           `&#125;`. Astro reads braces as expressions and a stray one is a
+           build error.
+        2. Do not re-indent. Every leading space is part of the drawing.
+
+      The <pre> is already set up to survive a narrow screen: `white-space:
+      pre` refuses to wrap (a wrapped line destroys ASCII art), `overflow-x:
+      auto` scrolls sideways instead, and the clamped font-size shrinks the
+      art on a phone before it comes to that.
+
+      Drop `aria-hidden` if the finished art reads as meaningful content and
+      give it a label instead; as an empty placeholder it is decorative.
+      ──────────────────────────────────────────────────────────────────────
+    */}
+    <pre
+      class="text-accent m-0 overflow-x-auto text-center"
+      style="white-space: pre; line-height: 1.05; font-size: clamp(0.28rem, 1.15vw, 0.85rem); font-family: var(--font-google-sans-code), monospace;"
+      aria-hidden="true"></pre>
+  </main>
+
+  <Footer />
+</Layout>

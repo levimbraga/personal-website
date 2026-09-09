@@ -193,6 +193,17 @@ intended behaviour.
 To replace the résumé, overwrite `public/levi-braga-resume.pdf` (keep the
 filename so existing links survive) and update the date line in `resume.md`.
 
+Because the filename never changes, **the old PDF stays cached** — in
+Cloudflare and in your own browser — after a deploy. If the page still serves
+the previous version, that is almost always what happened, not a failed
+upload. Purge (**Caching → Configuration → Purge Everything**) and hard-reload.
+To check which version is actually on disk without opening it:
+
+```bash
+pdftotext public/levi-braga-resume.pdf - | grep -c "levimbraga.dev"
+pdftotext public/levi-braga-resume.pdf - | grep -oE "[0-9]+ versioned migrations"
+```
+
 ---
 
 ## Publishing

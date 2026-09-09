@@ -2,25 +2,62 @@
 import { type CollectionEntry, getCollection, render } from "astro:content";
 import ProjectLayout from "@/layouts/ProjectLayout.astro";
 import Header from "@/components/Header.astro";
-import Breadcrumb from "@/components/Breadcrumb.astro";
-import Main from "@/components/Main.astro";
 import Footer from "@/components/Footer.astro";
+import Datetime from "@/components/Datetime.astro";
+import ShareLinks from "@/components/ShareLinks.astro";
+import BackButton from "@/components/BackButton.astro";
+import BackToTopButton from "@/components/BackToTopButton.astro";
+import AdjacentNav from "@/components/AdjacentNav.astro";
+import ArticleEnhancements from "@/components/ArticleEnhancements.astro";
 import { getProjectSlug, getProjectUrl } from "@/utils/getProjectPaths";
 import { getSortedProjects } from "@/utils/getSortedProjects";
+import { toTransitionName } from "@/utils/toTransitionName";
 import config from "@/config";
 
+/**
+ * Structurally this is the post page: same back button, heading, date line,
+ * article wrapper, dividers, share links, previous/next nav, and the same
+ * reading-progress and code-copy behaviour.
+ *
+ * Two things differ, and both are content rather than form: the meta row
+ * carries repository links where a post carries an edit link, and the stack
+ * sits where a post's tags sit. Anything else drifting apart is a bug.
+ */
 export async function getStaticPaths() {
   const projects = getSortedProjects(await getCollection("projects"));
 
-  return projects.map(project => ({
+  return projects.map((project, index) => ({
     params: { slug: getProjectSlug(project.id) },
-    props: { project },
+    props: {
+      project,
+      // Newest-first, matching the post page's convention.
+      prevProject:
+        index < projects.length - 1
+          ? {
+              id: projects[index + 1].id,
+              title: projects[index + 1].data.title,
+            }
+          : null,
+      nextProject:
+        index > 0
+          ? {
+              id: projects[index - 1].id,
+              title: projects[index - 1].data.title,
+            }
+          : null,
+    },
   }));
 }
 
-type Props = { project: CollectionEntry<"projects"> };
+type Adjacent = { id: string; title: string } | null;
 
-const { project } = Astro.props;
+type Props = {
+  project: CollectionEntry<"projects">;
+  prevProject: Adjacent;
+  nextProject: Adjacent;
+};
+
+const { project, prevProject, nextProject } = Astro.props;
 const locale = Astro.currentLocale ?? config.site.lang;
 
 const {
@@ -39,23 +76,29 @@ const {
 
 const { Content } = await render(project);
 
-// Same resolution order as posts: an explicit image wins, otherwise fall back
-// to the one generated for this project at build time.
 let ogImageUrl: string | undefined;
+
 if (typeof initOgImage === "string") {
   ogImageUrl = initOgImage;
 } else if (initOgImage?.src) {
   ogImageUrl = initOgImage.src;
 }
+
 if (!ogImageUrl && config.features.dynamicOgImage) {
   const projectUrl = getProjectUrl(project.id, locale).replace(/\/+$/, "");
   ogImageUrl = `${projectUrl}/index.png`;
 }
+
 const ogImage = ogImageUrl
   ? new URL(ogImageUrl, Astro.url.origin).href
   : undefined;
 
-const meta = [status, ...tech].filter(Boolean);
+const links = [
+  repo ? { href: repo, label: "Source on GitHub" } : null,
+  url ? { href: url, label: "Live site" } : null,
+].filter(link => link !== null);
+
+const stack = [status, ...tech].filter(Boolean);
 ---
 
 <ProjectLayout
@@ -72,52 +115,96 @@ const meta = [status, ...tech].filter(Boolean);
 >
   <Header />
 
-  <Breadcrumb currentLabel={title} />
+  <BackButton />
 
-  <Main pageTitle={title} class="app-prose">
+  <main
+    id="main-content"
+    class:list={["app-layout", { "mt-8": !config.features.showBackButton }]}
+    data-pagefind-body
+  >
+    <h1
+      style={{ viewTransitionName: toTransitionName(project.id) }}
+      class="text-accent inline-block text-2xl font-bold sm:text-3xl"
+    >
+      {title}
+    </h1>
+
+    <div class="my-2 flex flex-wrap items-center gap-2">
+      <Datetime {pubDatetime} {modDatetime} size="lg" />
+      {
+        links.map(link => (
+          <>
+            <span
+              aria-hidden="true"
+              class="text-muted-foreground max-sm:hidden"
+            >
+              |
+            </span>
+            <a
+              href={link.href}
+              rel="noopener noreferrer"
+              target="_blank"
+              class="hover:text-accent underline decoration-dashed underline-offset-4 max-sm:hidden"
+            >
+              {link.label}
+            </a>
+          </>
+        ))
+      }
+    </div>
+
+    <article
+      id="article"
+      class:list={[
+        "mt-8 w-full",
+        "app-prose max-w-app",
+        "prose-pre:bg-(--shiki-light-bg) dark:prose-pre:bg-(--shiki-dark-bg)",
+      ]}
+    >
+      <Content />
+    </article>
+
+    <hr class="my-8 border-dashed" />
+
     {
-      /*
-      Status, stack and links live in frontmatter rather than in the prose, so
-      they stay machine-readable for the structured data and cannot drift out
-      of step with the card on the index.
-    */
-    }
-    {
-      (meta.length > 0 || repo || url) && (
-        <div class="not-prose border-border mb-8 border-b pb-4 text-sm">
-          {meta.length > 0 && (
-            <p class="text-muted-foreground">{meta.join(" · ")}</p>
-          )}
-          {(repo || url) && (
-            <p class="mt-2 flex flex-wrap gap-x-4">
-              {repo && (
-                <a
-                  href={repo}
-                  rel="noopener noreferrer"
-                  target="_blank"
-                  class="hover:text-accent underline decoration-dashed underline-offset-4"
-                >
-                  Source on GitHub
-                </a>
-              )}
-              {url && (
-                <a
-                  href={url}
-                  rel="noopener noreferrer"
-                  target="_blank"
-                  class="hover:text-accent underline decoration-dashed underline-offset-4"
-                >
-                  Live site
-                </a>
-              )}
-            </p>
-          )}
-        </div>
+      links.length > 0 && (
+        <p class="flex flex-wrap gap-4 sm:hidden">
+          {links.map(link => (
+            <a
+              href={link.href}
+              rel="noopener noreferrer"
+              target="_blank"
+              class="hover:text-accent underline decoration-dashed underline-offset-4"
+            >
+              {link.label}
+            </a>
+          ))}
+        </p>
       )
     }
 
-    <Content />
-  </Main>
+    <BackToTopButton />
 
+    <ul class="mt-4 mb-8 flex flex-wrap gap-4 sm:my-8">
+      {stack.map(item => <li class="text-muted-foreground text-sm">{item}</li>)}
+    </ul>
+
+    <ShareLinks />
+
+    <hr class="my-8 border-dashed" />
+
+    <AdjacentNav
+      prev={prevProject && {
+        title: prevProject.title,
+        href: getProjectUrl(prevProject.id, locale),
+      }}
+      next={nextProject && {
+        title: nextProject.title,
+        href: getProjectUrl(nextProject.id, locale),
+      }}
+    />
+  </main>
   <Footer />
 </ProjectLayout>
+
+<ArticleEnhancements />

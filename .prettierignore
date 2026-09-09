@@ -15,3 +15,7 @@
 
 # Ignore MDX files
 *.mdx
+
+# ASCII art is whitespace-significant; the formatter reflows <pre> contents
+# and would destroy the drawing.
+/src/pages/straw-hat.astro

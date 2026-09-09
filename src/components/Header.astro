@@ -66,22 +66,25 @@ const isActive = (path: string) => {
       circle slightly oval.
 
       `shrink-0` because the sibling <nav> is `w-full`: without it the flex
-      container shrinks the avatar a couple of pixels narrower than it is tall,
-      and the circle comes out faintly egg-shaped.
+      container shrinks the avatar a couple of pixels narrower than it is tall.
+
+      On mobile the row is `items-baseline`, which left the absolutely
+      positioned avatar sitting ~6px below the centre of the menu button, so it
+      is centred explicitly there and handed back to the flex row from `sm` up.
     */
     }
     <a
       href={getRelativeLocaleUrl(locale, "")}
-      class="focus-outline absolute shrink-0 py-1 sm:static sm:my-auto"
+      class="focus-outline absolute top-1/2 shrink-0 -translate-y-1/2 py-1 sm:static sm:my-auto sm:translate-y-0"
     >
       <Image
         src={avatar}
         alt={`${config.site.author} — home`}
-        width={80}
-        height={80}
+        width={128}
+        height={128}
         fit="cover"
         position="center"
-        class="size-9 rounded-full sm:size-10"
+        class="size-11 rounded-md sm:size-13"
         loading="eager"
       />
     </a>
