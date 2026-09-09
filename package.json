@@ -1,7 +1,9 @@
 {
-  "name": "astro-paper-v6",
+  "name": "levimbraga-dev",
   "type": "module",
-  "version": "6.1.0",
+  "version": "1.0.0",
+  "description": "levimbraga.dev — built on AstroPaper v6.1.0",
+  "packageManager": "pnpm@12.3.4",
   "engines": {
     "node": ">=22.12.0"
   },
@@ -49,5 +51,6 @@
     "prettier-plugin-astro": "0.14.1",
     "prettier-plugin-tailwindcss": "^0.8.0",
     "typescript": "^6.0.3"
-  }
+  },
+  "private": true
 }
