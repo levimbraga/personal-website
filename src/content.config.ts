@@ -68,6 +68,16 @@ const projects = defineCollection({
       url: z.url().optional(),
       /** Shown as a compact line under the title on the index. */
       tech: z.array(z.string()).default([]),
+      /**
+       * Controlled-vocabulary tags, shared with posts — see docs/TAGS.md.
+       *
+       * Deliberately separate from `tech`. `tech` is the display stack on the
+       * card ("PostgreSQL/Supabase"); `tags` is the filing system, lowercase
+       * and slugged, and carries axes a stack line has no business showing
+       * (`architecture`, `build-log`). Merging them would force one of the two
+       * to be wrong.
+       */
+      tags: z.array(z.string()).default([]),
       ogImage: image().or(z.string()).optional(),
       canonicalURL: z.string().optional(),
     }),

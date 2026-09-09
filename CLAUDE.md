@@ -403,9 +403,18 @@ tags:
 - Each tag gets `/tags/<tag>/`, listed at `/tags/`.
 - Tags are slugified, so `Data Structures` becomes `/tags/data-structures/`.
 
-**Keep the vocabulary small.** Tags are only useful when several posts share
-them; a tag with one post is a page with one link on it, which is worse than no
-page. Reuse an existing tag or do not add one.
+**The vocabulary is closed — see [docs/TAGS.md](docs/TAGS.md).** A tag that is
+not on that list does not go in frontmatter; add it there first, with a line
+saying what it means. Freehand tagging produces `python`, `Python` and
+`python3` as three separate pages, and the system stops being trusted.
+
+That file also carries provisional tags for every planned post, so the decision
+is made once rather than at the top of each draft.
+
+**Projects are taggable too**, using the same vocabulary and the same
+`/tags/<tag>/` pages — `getUniqueTags` and the tag route span both collections.
+A tag is a subject; which collection an entry lives in is not the reader's
+problem.
 
 ---
 

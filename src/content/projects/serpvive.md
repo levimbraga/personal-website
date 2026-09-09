@@ -11,6 +11,18 @@ tech:
   - TypeScript
   - PostgreSQL/Supabase
   - Vercel
+tags:
+  - typescript
+  - sql
+  - postgres
+  - supabase
+  - databases
+  - distributed-systems
+  - api-design
+  - security
+  - architecture
+  - measurement
+  - build-log
 ---
 
 **A content decay monitor for blogs.** It connects to Google Search Console,
