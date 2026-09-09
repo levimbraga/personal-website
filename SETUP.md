@@ -133,6 +133,16 @@ is worse than none, because it actively misinforms.
 To replace the résumé, overwrite `public/levi-braga-resume.pdf` (keep the
 filename so existing links survive) and update the date line in `resume.md`.
 
+> **Known drift — fix on the next résumé edit.**
+> The PDF says SerpVive has **29** SQL migrations. The repository actually
+> contains **30** (`supabase/migrations/*.sql`); the count went stale when
+> `20260820_link_external_analyses_to_pages.sql` was added after the figure was
+> written. The Projects page says 30, which is the correct number and the one
+> people actually read. Deliberately not regenerating the PDF just for this —
+> but correct it whenever the résumé is next touched, and consider updating the
+> same figure in the [SerpVive README](https://github.com/levimbraga/serpvive),
+> which also still says 29.
+
 ---
 
 ## Publishing
@@ -151,54 +161,169 @@ deploy step.
 
 ## Deploying to Cloudflare Pages
 
-### First-time setup
+### Pages or Workers?
 
-1. **Cloudflare dashboard → Workers & Pages → Create → Pages → Connect to Git.**
-2. Authorise GitHub and pick the `levimbraga/personal-website` repository.
-3. Set the build configuration:
+The dashboard now pushes you toward **Workers** — the create flow defaults to it
+and Pages is a second choice on the same screen. Both can host this site. **Use
+Pages.**
 
-   | Setting | Value |
+This site is 100% static: `pnpm build` produces a directory of HTML, CSS, images
+and a Pagefind index, and nothing runs on a server at request time. Pages is
+built for exactly that shape — connect the repository, set a build command, and
+every push to `main` deploys. Workers with static assets would serve the same
+files, but it wants a `wrangler` config committed to the repository to describe
+something Pages infers on its own, and buys nothing a static blog can use.
+
+Pages is in maintenance rather than active development — Cloudflare's new work
+happens on Workers — but it is supported, and static hosting is a finished
+problem. The moment this site needs anything dynamic (real redirect logic, an
+API route, server-side rendering) is the moment to move to Workers, and there is
+no benefit in paying that complexity in advance. The
+[Workers alternative](#if-you-would-rather-use-workers) is written up below if
+you want it anyway.
+
+### Finding the right screen
+
+The menu moved: **Workers & Pages** now lives under **Compute & AI** in the left
+sidebar. Cloudflare reorganises this fairly often, so navigate by the landmarks
+rather than by exact pixels — the destination is a page listing your Workers and
+Pages projects side by side.
+
+1. Log in to the [Cloudflare dashboard](https://dash.cloudflare.com) and select
+   your account.
+2. Left sidebar → **Compute & AI** → **Workers & Pages**.
+3. Click **Create**.
+4. **This is the step where the default is wrong.** The create flow opens on
+   Workers. Switch to the **Pages** tab, then choose
+   **Connect to Git** (not "Upload assets" — that is a one-off drag-and-drop
+   with no rebuild on push).
+
+If you cannot find a Pages tab at all, go to
+[dash.cloudflare.com](https://dash.cloudflare.com) → your account →
+**Workers & Pages** → **Create** → **Pages** directly, or use the
+`pages/new/provider/github` path on the dashboard URL.
+
+### Connecting the repository
+
+5. **Connect GitHub** and authorise Cloudflare. Grant it access to
+   `levimbraga/personal-website` — you can limit it to that one repository
+   rather than the whole account.
+6. Select the repository, then **Begin setup**.
+
+### Build configuration
+
+7. Fill in:
+
+   | Field | Value |
    |---|---|
+   | Project name | `levimbraga-dev` (becomes `levimbraga-dev.pages.dev`) |
+   | Production branch | `main` |
    | Framework preset | `Astro` |
    | Build command | `pnpm run build` |
    | Build output directory | `dist` |
-   | Root directory | *(leave blank)* |
-   | Production branch | `main` |
+   | Root directory (advanced) | *leave blank* |
 
-4. Add an environment variable under **Settings → Environment variables**,
-   for **both** Production and Preview:
+   Selecting the Astro preset may auto-fill the build command as `npm run build`.
+   **Change it to `pnpm run build`.** The project is pnpm-only; the committed
+   `pnpm-lock.yaml` is what pins every dependency, and npm would ignore it and
+   resolve its own tree.
+
+8. Expand **Environment variables (advanced)** and add:
 
    | Variable | Value |
    |---|---|
-   | `NODE_VERSION` | `22.22.1` |
+   | `NODE_VERSION` | `22.12.0` |
 
-   This is not optional. Cloudflare's default Node is older than the `>=22.12.0`
-   this project requires, and the build fails without it.
+   **This is not optional, and skipping it is the single most likely way for
+   the first build to fail.** Cloudflare's default Node is older than the
+   `>=22.12.0` in `package.json`, and the failure does not say so — you get a
+   syntax error from deep inside a dependency, or an opaque `ERR_MODULE`, with
+   nothing pointing at the Node version. If the first build breaks, check this
+   before reading the stack trace.
 
-   `PUBLIC_GOOGLE_SITE_VERIFICATION` can also be set here instead of committing
-   the token — see [Google Search Console](#google-search-console).
+   Add `PUBLIC_GOOGLE_SITE_VERIFICATION` here too if you are using the
+   environment-variable route — see
+   [Google Search Console](#google-search-console).
 
-5. **Save and Deploy.** The first build takes a few minutes; later ones are
-   faster.
+9. **Save and Deploy.** The first build takes a few minutes; later ones are
+   faster. When it finishes the site is live at `levimbraga-dev.pages.dev` —
+   check it there before attaching the real domain.
 
-Cloudflare detects pnpm automatically from the committed `pnpm-lock.yaml`, so
-the lockfile must stay in version control.
+Cloudflare detects pnpm from the committed `pnpm-lock.yaml`, and
+`packageManager` in `package.json` pins the exact version, so the lockfile must
+stay in version control.
+
+### If you would rather use Workers
+
+Workers with static assets serves the same build output. It needs a
+`wrangler.jsonc` at the repository root that Pages does not require:
+
+```jsonc
+{
+  "name": "levimbraga-dev",
+  "compatibility_date": "2026-09-09",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "404-page"
+  }
+}
+```
+
+`not_found_handling: "404-page"` makes an unknown path serve `dist/404.html`
+with a real 404 status. Do not use `single-page-application` here — it answers
+every unknown URL with 200 and your own 404 page, which tells Google that every
+typo and dead link is a valid page.
+
+Then create the project through **Compute & AI → Workers & Pages → Create →
+Workers → Import a repository**, with the same build command, output directory
+and `NODE_VERSION` as above.
 
 ### Pointing levimbraga.dev at it
 
-1. The domain must be on Cloudflare — **Add a site** in the dashboard and move
-   the nameservers at your registrar if it is not already.
-2. In the Pages project: **Custom domains → Set up a custom domain**.
-3. Add **`levimbraga.dev`**, then add **`www.levimbraga.dev`** as well and let
-   Cloudflare redirect it to the apex. Serving both without a redirect splits
-   your ranking signals between two hostnames.
-4. Cloudflare creates the DNS records itself when the domain is in the same
-   account. Propagation is usually minutes.
+Do this only once the `*.pages.dev` build is confirmed working.
+
+1. **The domain has to be on Cloudflare first.** If it is not already: dashboard
+   → **Add a site** (or **Domain registration** if you want to transfer it in),
+   then change the nameservers at your registrar to the two Cloudflare gives
+   you. Wait for the zone to show **Active** — the steps below need it.
+2. Open the Pages project → **Custom domains** tab → **Set up a custom domain**.
+3. Enter **`levimbraga.dev`** and confirm. Because the zone is in the same
+   Cloudflare account, the DNS record is created for you — no manual CNAME.
+   The domain sits in *Initializing* while the certificate is issued; a few
+   minutes is normal, and it can take longer on a brand-new zone.
+4. Repeat for **`www.levimbraga.dev`**.
+
+#### Redirect www to the apex
+
+Adding both as custom domains makes Pages serve the **same content on both
+hostnames**, which is duplicate content — Cloudflare does not redirect one to
+the other for you. The canonical tags on every page already point at the apex,
+which limits the damage, but a real 301 is the correct fix:
+
+**Zone → Rules → Redirect Rules → Create rule.**
+
+| Field | Value |
+|---|---|
+| Rule name | `www to apex` |
+| If — custom filter expression | Hostname equals `www.levimbraga.dev` |
+| Then — type | Dynamic |
+| Expression | `concat("https://levimbraga.dev", http.request.uri.path)` |
+| Status code | `301` |
+| Preserve query string | on |
+
+Use **301**, not 302. A 302 tells Google the move is temporary and it keeps
+indexing the `www` version.
+
+Verify:
+
+```bash
+curl -sI https://www.levimbraga.dev | head -3   # expect 301 → https://levimbraga.dev
+```
 
 Keep `site.url` in `astro-paper.config.ts` exactly as
-`https://levimbraga.dev/` — it is what generates every canonical URL, the
-sitemap and the absolute OG image URLs. A mismatch here quietly poisons all
-three.
+`https://levimbraga.dev/` — it generates every canonical URL, the sitemap, and
+the absolute OG image URLs. A mismatch here quietly poisons all three, and
+nothing in the build will warn you.
 
 ### HTTPS
 
