@@ -1,0 +1,53 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import Socials from "./Socials.astro";
+import { useTranslations } from "@/i18n";
+import config from "@/config";
+
+type Props = {
+  noMarginTop?: boolean;
+} & HTMLAttributes<"footer">;
+
+const { noMarginTop = false, class: className, ...attrs } = Astro.props;
+
+const t = useTranslations(Astro.currentLocale);
+const currentYear = new Date().getFullYear();
+---
+
+<footer
+  class:list={["app-layout", { "mt-auto": !noMarginTop }, className]}
+  {...attrs}
+>
+  <div class="border-border border-t py-6 sm:py-4">
+    <div class="flex flex-col items-center justify-between sm:flex-row-reverse">
+      <Socials />
+      <div
+        class="my-2 flex flex-col items-center whitespace-nowrap sm:flex-row"
+      >
+        <span
+          >{t.footer.copyright} &#169; {currentYear} {config.site.author}</span
+        >
+        <span class="hidden sm:inline">&nbsp;|&nbsp;</span>
+        <span>{t.footer.allRightsReserved}</span>
+      </div>
+    </div>
+    {
+      /*
+      Courtesy credit. The MIT licence does not require visible attribution —
+      the LICENSE file already satisfies it — but the theme is someone else's
+      work and saying so costs one line.
+    */
+    }
+    <div class="text-muted-foreground mt-2 text-center text-sm sm:text-start">
+      {t.footer.theme}:{" "}
+      <a
+        href="https://github.com/satnaing/astro-paper"
+        rel="noopener noreferrer"
+        target="_blank"
+        class="hover:text-accent underline decoration-dashed underline-offset-4"
+      >
+        AstroPaper
+      </a>
+    </div>
+  </div>
+</footer>
