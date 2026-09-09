@@ -61,6 +61,51 @@ page that predictably dips every year is not dying.
 zero. Without it, a page going from 3 clicks to 1 reports as a 67% collapse and
 drowns the signal. A page that is growing scores zero too.
 
+The window and the guards, from the scorer itself:
+
+```ts file="src/lib/engine/decay-scorer.ts"
+const twentyEightDaysAgo = new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000)
+  .toISOString()
+  .slice(0, 10);
+const sixteenMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 16, 1) // [!code highlight]
+  .toISOString()
+  .slice(0, 10);
+```
+
+```ts file="src/lib/engine/decay-scorer.ts"
+// Calculate decay score
+let decayScore = 0;
+if (peakClicks >= 10 && currentClicks28d < peakClicks) { // [!code highlight]
+  decayScore = Math.round(((peakClicks - currentClicks28d) / peakClicks) * 10000) / 100;
+}
+```
+
+That one highlighted condition is both guards at once. `peakClicks >= 10` is the
+noise filter; `currentClicks28d < peakClicks` means a page that is growing
+scores zero rather than a negative number that would sort strangely.
+
+Velocity is the same arithmetic over two window pairs — this week against last,
+and the last 28 days against the 28 before them:
+
+```ts file="src/lib/engine/velocity.ts"
+const velocity28d =
+  period2Clicks > 0
+    ? Math.round(((period2Clicks - period1Clicks) / period2Clicks) * 10000) /
+      100
+    : 0;
+```
+
+And seasonality is a ratio against the same window one year earlier, inside a
+±20% band:
+
+```ts file="src/lib/engine/seasonal.ts"
+let isSeasonal = false;
+if (lastYearClicks > 0 && currentClicks > 0) {
+  const ratio = currentClicks / lastYearClicks;
+  isSeasonal = ratio >= 1 - tolerance && ratio <= 1 + tolerance; // [!code highlight]
+}
+```
+
 **Why no LLM here.** The project has an explicit rule, written into its
 `CLAUDE.md` before the first line of application code: _never use a language
 model where deterministic math works._ The model is reserved for the single step
@@ -108,6 +153,38 @@ Three mechanics make it work:
   errors are classified as non-retryable and break out immediately instead of
   burning the retry budget on something that cannot succeed.
 
+Each attempt is raced against a timer, so a provider that hangs cannot hold the
+chain:
+
+```ts file="src/lib/ai/fallback-chain.ts"
+// Race the provider call against a timeout
+const result = await Promise.race([
+  provider.call(messages, options),
+  new Promise<never>(
+    (_, reject) => setTimeout(() => reject(new Error("TIMEOUT")), timeout) // [!code highlight]
+  ),
+]);
+```
+
+A failure that cannot succeed on a retry is classified as permanent, so the
+chain stops paying for it:
+
+```ts file="src/lib/ai/fallback-chain.ts"
+function isNonRetryable(error: string): boolean {
+  const lower = error.toLowerCase();
+  return (
+    lower.includes("401") ||
+    lower.includes("403") ||
+    lower.includes("invalid_api_key") ||
+    lower.includes("authentication") ||
+    lower.includes("permission denied") ||
+    lower.includes("billing") ||
+    lower.includes("quota exceeded") ||
+    lower.includes("400")
+  );
+}
+```
+
 **Both levels have fired in production.** One diagnosis of eleven completed on
 Sonnet after Opus failed — a same-provider fallback. Separately, Gemini hit its
 API quota mid-brief and the chain fell through to OpenAI and completed. The
@@ -149,6 +226,34 @@ flowchart TD
     ZOD2 -->|no| GIVEUP([Reject])
 ```
 
+Two steps of the ladder, as they are written:
+
+````ts file="src/lib/ai/json-extract.ts"
+// Step 1: Remove markdown code fences
+let cleaned = text.replace(/```(?:json)?\s*/g, "").replace(/```/g, "");
+
+// Step 2: Find the JSON object boundaries
+const firstBrace = cleaned.indexOf("{");
+const lastBrace = cleaned.lastIndexOf("}");
+````
+
+```ts file="src/lib/ai/json-extract.ts"
+// Step 5: Try to fix truncated JSON by closing open brackets
+const openBraces = (fixedTruncated.match(/{/g) ?? []).length;
+const closeBraces = (fixedTruncated.match(/}/g) ?? []).length;
+
+for (let i = 0; i < openBrackets - closeBrackets; i++) {
+  fixedTruncated += "]"; // [!code highlight]
+}
+for (let i = 0; i < openBraces - closeBraces; i++) {
+  fixedTruncated += "}"; // [!code highlight]
+}
+```
+
+Those two highlighted lines are what recovers a diagnosis that hit the output
+token limit mid-object: the model stopped talking, and the brackets get closed
+for it rather than the whole run being thrown away.
+
 The retry is worth singling out. It does not simply ask again — it hands the
 model back its own broken output together with the precise validation errors.
 And the pre-validation truncation exists because a model returning six good
@@ -173,6 +278,30 @@ is the fix.
 - **30 versioned SQL migrations**, applied in filename order.
 - **42,784 Search Console query rows ingested**, across 188 real monitored
   pages. One site alone accounts for roughly 22,000 rows in `page_queries`.
+
+Row-level security is not one setting, it is a policy per table per operation.
+One of the thirty migrations, in full:
+
+```sql file="supabase/migrations/20260313_add_external_analyses.sql"
+ALTER TABLE public.external_analyses ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own external analyses"
+  ON public.external_analyses FOR SELECT
+  USING (auth.uid() = user_id); -- [!code highlight]
+
+CREATE POLICY "Users can insert own external analyses"
+  ON public.external_analyses FOR INSERT
+  WITH CHECK (auth.uid() = user_id); -- [!code highlight]
+
+CREATE POLICY "Users can delete own external analyses"
+  ON public.external_analyses FOR DELETE
+  USING (auth.uid() = user_id);
+```
+
+`auth.uid()` is the caller's id taken from their JWT, so Postgres refuses
+another user's rows whatever the application asks for. Crons and webhooks use
+the service role, which bypasses RLS deliberately — and that key never reaches
+the browser.
 
 ## Instrumentation and cost control
 
@@ -203,6 +332,107 @@ path — a diagnosis searches Google live, crawls the page plus up to three
 ranking competitors, and generates up to 8,192 output tokens before validation.
 
 ---
+
+## Running it yourself
+
+> [!WARNING]
+> This is not a clone-and-run project, and it would be dishonest to present it
+> as one. Before anything renders you need a Google Cloud project with OAuth
+> credentials for Search Console, a Supabase project with thirty migrations
+> applied, and API keys for two paid third-party services. Budget an evening,
+> not ten minutes.
+
+### What you need first
+
+| Prerequisite                  | What it costs                                                                                                                    |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| **Supabase project**          | Free tier is enough. The schema is thirty migrations.                                                                            |
+| **Google Cloud OAuth client** | Free, but the Search Console consent screen has to be configured, and you must own a verified property to have any data to read. |
+| **Anthropic API key**         | Paid per call. A diagnosis averaged **$0.2177** on the previous model generation.                                                |
+| **Serper.dev key**            | Paid per search. One diagnosis is one SERP fetch.                                                                                |
+| **Firecrawl key**             | Optional. Without it the fetcher falls back to Cheerio, which cannot see JavaScript-rendered pages.                              |
+| **Gemini / OpenAI keys**      | Optional. The chain silently skips any provider whose key is unset, so you can run on Anthropic alone.                           |
+
+### Setup
+
+```bash
+git clone https://github.com/levimbraga/serpvive.git
+cd serpvive
+npm install
+cp .env.example .env.local
+```
+
+Apply the migrations to your Supabase project **in filename order** — they are
+timestamped, so sorting by name is chronological:
+
+```bash file="supabase/migrations"
+ls supabase/migrations/*.sql | sort   # 30 files, 20260309_… through 20260820_…
+```
+
+They are plain SQL. Paste them into the Supabase SQL editor in that order, or
+run them with the Supabase CLI. Order matters: later migrations add columns to
+tables the earlier ones create.
+
+Then:
+
+```bash
+npm run dev   # http://localhost:3000
+```
+
+### The environment
+
+Every variable is in `.env.example`, and the file is complete — I checked each
+one the code reads against what the file declares. The ones that decide whether
+the app boots at all:
+
+| Variable                                                          | Purpose                                                                                          |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`       | Client and auth. Nothing works without them.                                                     |
+| `SUPABASE_SERVICE_ROLE_KEY`                                       | Server-side admin client for crons and pipelines. Bypasses RLS — never expose it to the browser. |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI` | The Search Console OAuth flow. The redirect URI must match the Google console exactly.           |
+| `ANTHROPIC_API_KEY`                                               | Primary diagnosis model.                                                                         |
+| `SERPER_API_KEY`                                                  | Live SERP results.                                                                               |
+| `CRON_SECRET`                                                     | Bearer token guarding every cron endpoint.                                                       |
+| `NEXT_PUBLIC_APP_URL`                                             | Absolute base for redirects and emails.                                                          |
+| `ADMIN_EMAIL`                                                     | Admin account for demo management.                                                               |
+
+And the ones that decide what it costs you:
+
+| Variable                                  | Purpose                                                                                                   |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `AI_SPEND_CAP_USD`                        | Ceiling on total recorded AI spend. Unset means no cap. Approximate by design, and fails open.            |
+| `AI_DISABLED`                             | `true` stops every AI call at the single funnel they share, leaving ingestion, scoring and email running. |
+| `GOOGLE_GEMINI_API_KEY`, `OPENAI_API_KEY` | Links three and four of the failover chain. Skipped when unset.                                           |
+| `FIRECRAWL_API_KEY`                       | JS-rendered page extraction. Falls back to Cheerio.                                                       |
+
+**Set `AI_SPEND_CAP_USD` before you run anything.** It is the only thing
+standing between a loop and your card.
+
+### The first run
+
+Connect a Search Console property, then trigger the engine from the dashboard.
+The deterministic pass runs first and costs nothing: it ingests the property's
+pages, computes decay scores, velocity and seasonality, and classifies each page
+as healthy, warning, critical or dead. You get a populated dashboard without a
+single model call.
+
+Only then is a diagnosis a separate, deliberate action — and that is the one
+that spends money. Expect a few minutes: the pipeline searches Google live,
+crawls your page plus up to three ranking competitors, and generates up to 8,192
+output tokens before validation.
+
+### Adapting it to something else
+
+- **A different site** — nothing is hardcoded to one property. Connect a
+  different Search Console property and the engine treats it the same.
+- **A different provider in the chain** — providers sit behind a common
+  `AIProvider` interface. Add or reorder entries in `getDiagnosisChain()` in
+  `src/lib/ai/chain.ts`; the fallback runner does not care who is in the list.
+- **Different thresholds** — the decay window, the noise floor and the
+  seasonality tolerance are constants in `src/lib/engine/` and
+  `src/lib/constants.ts`, not scattered through queries.
+- **No AI at all** — set `AI_DISABLED=true` and the deterministic engine still
+  runs end to end. That split is the whole architecture, and it holds.
 
 ## The decision I defend most
 

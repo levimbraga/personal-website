@@ -2,6 +2,8 @@
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
+import { getRelativeLocaleUrl } from "astro:i18n";
+import luffyArt from "@/assets/art/luffy.txt?raw";
 import config from "@/config";
 
 /**
@@ -13,9 +15,53 @@ import config from "@/config";
  *  - Not disallowed in robots.txt — a Disallow line is a public list of the
  *    things you are hiding, which is the opposite of what this wants.
  *
- * This file is listed in .prettierignore. ASCII art is whitespace-significant
- * and the formatter reflows it, so the whole file is kept out of its way.
+ * The art is imported with `?raw` and printed with `set:text` rather than
+ * pasted into the template. It is 62 lines of 142 Braille glyphs, and every
+ * one of them is significant: `U+2800` is a blank braille cell, not a space,
+ * and it is what holds the columns apart. Keeping it in its own .txt means
+ * nothing in the toolchain reflows it, re-indents it, or trims a line end.
  */
+const locale = Astro.currentLocale ?? config.site.lang;
+
+/**
+ * Braille is not in Google Sans Code — all twenty of the theme's font files
+ * carry zero glyphs in U+2800-U+28FF, so the site font would hand this to
+ * whatever the browser picked next and the drawing would collapse.
+ *
+ * So this one element gets its own stack. DejaVu Sans and Noto Sans Symbols 2
+ * both carry the full 256-glyph block, and in both the block is uniform width
+ * (every glyph the same advance), which is what actually matters here — a
+ * proportional font is fine as long as the braille cells line up. Segoe UI
+ * Symbol and Apple Symbols cover Windows and macOS.
+ *
+ * Note DejaVu Sans *Mono* is not in the list: despite the name it has no
+ * braille at all, so listing it would only add a failed lookup.
+ */
+const brailleStack = [
+  '"DejaVu Sans"',
+  '"Noto Sans Symbols 2"',
+  '"Noto Sans Symbols2"',
+  '"Segoe UI Symbol"',
+  '"Apple Symbols"',
+  "monospace",
+].join(", ");
+
+/**
+ * 142 columns at ~0.73em per cell is a little over 100em wide, so the type has
+ * to get very small on a phone. `clamp` scales it with the viewport and stops
+ * before it becomes unreadable on a desktop. Line-height is exactly 1: braille
+ * fills its whole cell, and any leading opens a visible gap straight through
+ * the drawing.
+ */
+const artStyle = [
+  "white-space: pre",
+  "line-height: 1",
+  "font-size: clamp(0.18rem, 0.86vw, 0.72rem)",
+  `font-family: ${brailleStack}`,
+  "font-variant-ligatures: none",
+  "letter-spacing: 0",
+  "tab-size: 1",
+].join("; ");
 ---
 
 <Layout
@@ -26,34 +72,30 @@ import config from "@/config";
 
   <main
     id="main-content"
-    class="app-layout flex flex-1 flex-col items-center justify-center py-16"
+    class="app-layout flex flex-1 flex-col items-center justify-center py-12"
     data-pagefind-ignore
   >
-    {/*
-      ──────────────────────────────────────────────────────────────────────
-      THE ART GOES HERE — paste it between the <pre> tags below, replacing
-      this comment.
+    <p class="sr-only">ASCII art of Monkey D. Luffy from One Piece.</p>
 
-      Two rules when pasting:
+    <div class="w-full overflow-x-auto">
+      <pre
+        class="text-accent m-0 w-fit min-w-full"
+        style={artStyle}
+        aria-hidden="true"
+        set:text={luffyArt}
+      />
+    </div>
 
-        1. Escape every `\` as `\\`, and every `{` or `}` as `&#123;` /
-           `&#125;`. Astro reads braces as expressions and a stray one is a
-           build error.
-        2. Do not re-indent. Every leading space is part of the drawing.
+    <p class="text-muted-foreground mt-8 text-center italic">
+      &quot;I&apos;m gonna be King of the Pirates!&quot;
+    </p>
 
-      The <pre> is already set up to survive a narrow screen: `white-space:
-      pre` refuses to wrap (a wrapped line destroys ASCII art), `overflow-x:
-      auto` scrolls sideways instead, and the clamped font-size shrinks the
-      art on a phone before it comes to that.
-
-      Drop `aria-hidden` if the finished art reads as meaningful content and
-      give it a label instead; as an empty placeholder it is decorative.
-      ──────────────────────────────────────────────────────────────────────
-    */}
-    <pre
-      class="text-accent m-0 overflow-x-auto text-center"
-      style="white-space: pre; line-height: 1.05; font-size: clamp(0.28rem, 1.15vw, 0.85rem); font-family: var(--font-google-sans-code), monospace;"
-      aria-hidden="true"></pre>
+    <a
+      href={getRelativeLocaleUrl(locale, "")}
+      class="hover:text-accent mt-6 text-sm underline decoration-dashed underline-offset-4"
+    >
+      Back home
+    </a>
   </main>
 
   <Footer />
