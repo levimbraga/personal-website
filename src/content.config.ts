@@ -63,9 +63,9 @@ const projects = defineCollection({
       /** Short state of play, e.g. "Paused since April 2026". */
       status: z.string().optional(),
       /** Public source repository, if there is one. */
-      repo: z.string().url().optional(),
+      repo: z.url().optional(),
       /** Live deployment, if there is one. */
-      url: z.string().url().optional(),
+      url: z.url().optional(),
       /** Shown as a compact line under the title on the index. */
       tech: z.array(z.string()).default([]),
       ogImage: image().or(z.string()).optional(),

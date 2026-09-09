@@ -1,5 +1,7 @@
 ---
 import { getRelativeLocaleUrl } from "astro:i18n";
+import { Image } from "astro:assets";
+import avatar from "@/assets/images/levi-braga-avatar.jpg";
 import IconUnderline from "@/assets/icons/IconUnderline.svg";
 import IconMenuDeep from "@/assets/icons/IconMenuDeep.svg";
 import IconArchive from "@/assets/icons/IconArchive.svg";
@@ -50,11 +52,39 @@ const isActive = (path: string) => {
   >
     {
       /*
-      No wordmark here on purpose: it repeated the home page's own <h1> and
-      added nothing on the other pages. The "Home" nav item carries the link
-      back to the root that the wordmark used to provide.
+      The avatar, not a wordmark: the name is already the home page's <h1>, so
+      repeating it in text added nothing, but the corner still wants an anchor.
+
+      Absolute on mobile and static from `sm` up, the same trick the wordmark
+      used — the mobile nav is full-width, so an in-flow element here would be
+      squeezed by it.
+
+      The source is 538x448, so it is cropped to a square at build time with
+      `fit="cover"` rather than being squashed. Cropping here instead of with
+      CSS keeps the emitted width/height attributes square too — a non-square
+      pair sets an aspect-ratio that fights the `size-*` utility and leaves the
+      circle slightly oval.
+
+      `shrink-0` because the sibling <nav> is `w-full`: without it the flex
+      container shrinks the avatar a couple of pixels narrower than it is tall,
+      and the circle comes out faintly egg-shaped.
     */
     }
+    <a
+      href={getRelativeLocaleUrl(locale, "")}
+      class="focus-outline absolute shrink-0 py-1 sm:static sm:my-auto"
+    >
+      <Image
+        src={avatar}
+        alt={`${config.site.author} — home`}
+        width={80}
+        height={80}
+        fit="cover"
+        position="center"
+        class="size-9 rounded-full sm:size-10"
+        loading="eager"
+      />
+    </a>
     <nav
       id="nav-menu"
       class="flex w-full flex-col items-center sm:ms-2 sm:flex-row sm:justify-end sm:space-x-4 sm:py-0"

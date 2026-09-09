@@ -22,4 +22,8 @@ Everything in one place.
 
 ## Get in touch
 
+<!--email_off-->
+
 - **Email** — [levimaiabraga@gmail.com](mailto:levimaiabraga@gmail.com)
+
+<!--/email_off-->

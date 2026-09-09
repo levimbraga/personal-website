@@ -8,7 +8,7 @@ Everything needed to run this site, publish to it, and keep it indexed.
 - [Editing the standalone pages](#editing-the-standalone-pages)
 - [Publishing](#publishing)
 - [Deploying to Cloudflare Pages](#deploying-to-cloudflare-pages)
-- [Cloudflare: turn off Email Address Obfuscation](#cloudflare-turn-off-email-address-obfuscation)
+- [Cloudflare: the obfuscated email link](#cloudflare-the-obfuscated-email-link)
 - [Google Search Console](#google-search-console)
 - [Submitting the sitemap](#submitting-the-sitemap)
 - [Licence](#licence)
@@ -192,16 +192,6 @@ intended behaviour.
 
 To replace the résumé, overwrite `public/levi-braga-resume.pdf` (keep the
 filename so existing links survive) and update the date line in `resume.md`.
-
-> **Known drift — fix on the next résumé edit.**
-> The PDF says SerpVive has **29** SQL migrations. The repository actually
-> contains **30** (`supabase/migrations/*.sql`); the count went stale when
-> `20260820_link_external_analyses_to_pages.sql` was added after the figure was
-> written. The Projects page says 30, which is the correct number and the one
-> people actually read. Deliberately not regenerating the PDF just for this —
-> but correct it whenever the résumé is next touched, and consider updating the
-> same figure in the [SerpVive README](https://github.com/levimbraga/serpvive),
-> which also still says 29.
 
 ---
 
@@ -408,29 +398,81 @@ curl -sI https://levimbraga.dev | grep -i strict-transport   # expect a max-age
 
 ---
 
-## Cloudflare: turn off Email Address Obfuscation
+## Cloudflare: the obfuscated email link
 
-Cloudflare's **Email Address Obfuscation** rewrites `mailto:` links in proxied
-HTML into an encoded blob that a script decodes in the browser. When it does
-not decode, the link points at a Cloudflare interstitial
+Cloudflare's **Email Address Obfuscation** (part of Scrape Shield) rewrites
+`mailto:` links in proxied HTML into an encoded blob decoded by a script. When
+it fails to decode, the link points at a Cloudflare interstitial
 (`/cdn-cgi/l/email-protection`) instead of opening a mail client, and anyone
-copying the address gets the encoded text rather than the address.
+copying the address gets encoded text.
 
-**Where:** dashboard → select `levimbraga.dev` → **Scrape Shield** →
-**Email Address Obfuscation** → off. Cloudflare has been consolidating these
-settings, so on a newer dashboard look under **Security → Settings** and search
-for "email obfuscation"; it is the same switch. Purge the cache afterwards
-(**Caching → Configuration → Purge Everything**) or the old HTML keeps serving.
+### The fix that lives in this repository
 
-**Why off rather than scoped to one page:** the address is in the footer, so it
-is on *every* page of this site, not only `/contact/`. A Configuration Rule
-limited to a path would leave it broken everywhere else. The protection is also
-worth little now — scrapers run JavaScript, and harvested-address spam comes
-mostly from breaches and lists rather than from parsing HTML — while the cost is
-paid by every real visitor who clicks or copies.
+The address is wrapped in Cloudflare's `email_off` markers, which tell the
+feature to leave that markup alone:
 
-If the address ever does start attracting spam, the useful answers are an alias
-that can be rotated or a contact form, not obfuscation.
+```html
+<!--email_off-->
+  ... the mailto link ...
+<!--/email_off-->
+```
+
+They are in two places, which together cover the whole site:
+
+| File | Covers |
+|---|---|
+| `src/components/Socials.astro` | the mail icon in the footer — every page |
+| `src/content/pages/contact.md` | the visible address on `/contact/` |
+
+These are directives, not comments for humans. **Do not delete them**, and wrap
+any new email address the same way. They survive the Astro build (verified in
+`dist/`), they are reviewable in a diff, and they keep working when Cloudflare
+next moves its dashboard around — which is why they are preferred here over a
+dashboard toggle.
+
+### Turning the feature off entirely, if you'd rather
+
+Cloudflare has reorganised this menu, so there are two places to look. Both
+lead to the same switch:
+
+1. **Scrape Shield** — select `levimbraga.dev`, then **Scrape Shield** in the
+   left sidebar → **Email Address Obfuscation**.
+2. **Security → Settings** — newer dashboards fold Scrape Shield in here; the
+   setting is in the list, searchable as "email".
+
+If neither menu shows it, go straight to the URL, which has outlived several
+menu redesigns:
+
+```
+https://dash.cloudflare.com/?to=/:account/levimbraga.dev/scrape-shield
+```
+
+Or set it without the dashboard at all:
+
+```bash
+curl -X PATCH \
+  "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/settings/email_obfuscation" \
+  -H "Authorization: Bearer $CF_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  --data '{"value":"off"}'
+```
+
+### Either way, purge the cache
+
+Cloudflare serves the already-rewritten HTML until you do:
+
+**Caching → Configuration → Purge Everything.** Then check:
+
+```bash
+curl -s https://levimbraga.dev/contact/ | grep -c "cdn-cgi/l/email-protection"   # expect 0
+curl -s https://levimbraga.dev/contact/ | grep -o "mailto:[^\"]*"                # expect the address
+```
+
+Worth knowing: the protection is weak now — scrapers run JavaScript, and
+harvested-address spam comes mostly from breaches and resold lists — while the
+cost lands on every real visitor who clicks or copies. If the address does
+start attracting spam, a rotatable alias or a contact form are the real
+answers, not obfuscation.
 
 ## Google Search Console
 

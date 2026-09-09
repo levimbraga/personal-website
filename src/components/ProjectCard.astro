@@ -2,21 +2,28 @@
 import type { CollectionEntry } from "astro:content";
 import { getProjectUrl } from "@/utils/getProjectPaths";
 import { toTransitionName } from "@/utils/toTransitionName";
+import Datetime from "./Datetime.astro";
 
+/**
+ * Deliberately the same markup as Card.astro, the post list item: heading link,
+ * date, then the blurb. The two indexes are meant to read as siblings, so this
+ * component tracks that one rather than inventing its own shape.
+ *
+ * Status and stack are not shown here for the same reason — they have no
+ * counterpart on a post card. They render on the project's own page, where
+ * there is room for them.
+ */
 type Props = {
   variant?: "h2" | "h3";
 } & CollectionEntry<"projects">;
 
 const { variant: Heading = "h2", id, data } = Astro.props;
 
-const { title, description, summary, status, tech } = data;
+const { title, description, summary, pubDatetime, modDatetime } = data;
 
-// The index shows `summary` when there is one; `description` is written for
-// search results and social cards, and is the fallback rather than the default.
+// `summary` is written for this list; `description` is written for search
+// results and is the fallback rather than the default.
 const blurb = summary ?? description;
-
-// Status and stack read as one quiet line under the title.
-const meta = [status, ...tech].filter(Boolean);
 ---
 
 <li class="my-6">
@@ -32,10 +39,6 @@ const meta = [status, ...tech].filter(Boolean);
       {title}
     </Heading>
   </a>
-  {
-    meta.length > 0 && (
-      <p class="text-muted-foreground text-sm">{meta.join(" · ")}</p>
-    )
-  }
+  <Datetime {pubDatetime} {modDatetime} />
   <p>{blurb}</p>
 </li>

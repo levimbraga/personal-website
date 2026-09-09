@@ -21,6 +21,16 @@ type OgImageInput = {
   url: URL;
 };
 
+/**
+ * The bottom-right of the card. `config.site.title` used to go here, but on a
+ * personal site the title is the author's name, so the card read
+ * "by Levi Maia Braga … Levi Maia Braga". The domain is the useful second
+ * piece of information.
+ */
+const siteDomain = config.site.url
+  .replace(/^https?:\/\//, "")
+  .replace(/\/+$/, "");
+
 export async function renderOgImage({
   title,
   author,
@@ -152,7 +162,7 @@ export async function renderOgImage({
                             type: "span",
                             props: {
                               style: { overflow: "hidden", fontWeight: "bold" },
-                              children: config.site.title,
+                              children: siteDomain,
                             },
                           },
                         ],

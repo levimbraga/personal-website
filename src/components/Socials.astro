@@ -22,6 +22,20 @@ const items = await Promise.all(
 );
 ---
 
+<!--
+  email_off is a Cloudflare Scrape Shield directive, not a comment for humans.
+  It tells Email Address Obfuscation to leave the markup between the tags
+  alone, so the mailto: stays a real mailto: instead of being rewritten to a
+  /cdn-cgi/l/email-protection interstitial.
+
+  It lives here rather than in a dashboard toggle because this is the version
+  that is reviewable, survives a dashboard reorganisation, and applies to
+  every page automatically — the mail icon is in the footer sitewide.
+
+  The wrapper covers the whole row rather than just the mail link: the other
+  entries contain no email addresses, so there is nothing for the feature to
+  obfuscate in them anyway.
+--><!--email_off-->
 <div class="flex flex-wrap items-center gap-1">
   {
     items.map(({ url, title, Icon }) =>
@@ -34,3 +48,4 @@ const items = await Promise.all(
     )
   }
 </div>
+<!--/email_off-->
