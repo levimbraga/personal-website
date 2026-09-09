@@ -47,16 +47,39 @@ const brailleStack = [
 ].join(", ");
 
 /**
- * 142 columns at ~0.73em per cell is a little over 100em wide, so the type has
- * to get very small on a phone. `clamp` scales it with the viewport and stops
- * before it becomes unreadable on a desktop. Line-height is exactly 1: braille
- * fills its whole cell, and any leading opens a visible gap straight through
- * the drawing.
+ * The font size is derived, not guessed.
+ *
+ * Measured from DejaVu Sans itself (the font the browser actually resolves
+ * this stack to): every glyph in U+2800-U+28FF has an advance of 1500 units
+ * against a 2048 unit em, i.e. exactly 0.732422em. Note that is nowhere near
+ * the ~0.6em a typical monospaced face uses — the braille stack has its own
+ * metric, so the usual rule of thumb would have been wrong here.
+ *
+ *   142 columns x 0.732422em            = 104.0039em total width
+ *   to occupy 96vw:  96 / 104.0039      = 0.923vw per em
+ *
+ * So `font-size: 0.923vw` makes the drawing exactly 96vw wide at any viewport,
+ * leaving 4vw of breathing room and never a horizontal scrollbar.
+ *
+ * `min()` caps it at 14px so a very wide monitor does not blow the art up to
+ * fill 2560px; past ~1517px viewport it simply stops growing and centres.
+ *
+ * There is deliberately no floor. On a phone this comes out around 3.6px and
+ * is unreadable up close — but the alternative is clipping the drawing, and a
+ * complete miniature beats a cropped one you have to scroll.
+ *
+ * Line-height is exactly 1: braille fills its whole cell, so any leading opens
+ * a visible white gap straight through the middle of the picture.
  */
+const COLUMNS = 142;
+const BRAILLE_ADVANCE_EM = 1500 / 2048; // 0.732422, measured from DejaVu Sans
+const TOTAL_WIDTH_EM = COLUMNS * BRAILLE_ADVANCE_EM; // 104.0039
+const FONT_SIZE_VW = (96 / TOTAL_WIDTH_EM).toFixed(3); // 0.923
+
 const artStyle = [
   "white-space: pre",
   "line-height: 1",
-  "font-size: clamp(0.18rem, 0.86vw, 0.72rem)",
+  `font-size: min(${FONT_SIZE_VW}vw, 14px)`,
   `font-family: ${brailleStack}`,
   "font-variant-ligatures: none",
   "letter-spacing: 0",
@@ -70,16 +93,24 @@ const artStyle = [
 >
   <Header />
 
+  {
+    /*
+    This one page opts out of `app-layout`. That utility caps content at
+    `max-w-3xl` (48rem), and the drawing is 104em wide — inside the normal
+    container it could only ever be a horizontal scrollbar. Header and footer
+    still use `app-layout`, so only the art escapes it.
+  */
+  }
   <main
     id="main-content"
-    class="app-layout flex flex-1 flex-col items-center justify-center py-12"
+    class="flex w-full flex-1 flex-col items-center justify-center py-12"
     data-pagefind-ignore
   >
     <p class="sr-only">ASCII art of Monkey D. Luffy from One Piece.</p>
 
-    <div class="w-full overflow-x-auto">
+    <div class="flex w-full justify-center">
       <pre
-        class="text-accent m-0 w-fit min-w-full"
+        class="text-accent m-0"
         style={artStyle}
         aria-hidden="true"
         set:text={luffyArt}

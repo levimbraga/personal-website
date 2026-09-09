@@ -5,6 +5,9 @@ description: "How to reach Levi Maia Braga — email, GitHub, LinkedIn, X, Reddi
 
 Everything in one place.
 
+Feel free to reach out on any of these about anything, or connect with me on
+[LinkedIn](https://www.linkedin.com/in/levimbraga/).
+
 ## Code
 
 - **GitHub** — [github.com/levimbraga](https://github.com/levimbraga)
