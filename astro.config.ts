@@ -18,7 +18,19 @@ import {
 } from "@shikijs/transformers";
 import { transformerFileName } from "./src/utils/transformers/fileName";
 import { remarkMermaid } from "./src/utils/remark/mermaid";
+import { getTagCounts, TAG_INDEX_THRESHOLD } from "./src/utils/tagIndexing";
 import config from "./astro-paper.config";
+
+const tagCounts = getTagCounts({
+  scheduledPostMargin: config.posts?.scheduledPostMargin,
+});
+
+/** `/tags/<slug>/` (and its paginated pages) for a tag with too few entries. */
+function isThinTagPage(page: string): boolean {
+  const match = /\/tags\/([^/]+)\//.exec(page);
+  if (!match) return false;
+  return (tagCounts.get(match[1]) ?? 0) < TAG_INDEX_THRESHOLD;
+}
 
 export default defineConfig({
   site: config.site.url,
@@ -30,6 +42,10 @@ export default defineConfig({
         // no search index. It is not disallowed in robots.txt though — finding
         // it is the point, and blocking it would only advertise it.
         !page.endsWith("/straw-hat/") &&
+        // A tag page below the threshold is marked noindex, so listing it in
+        // the sitemap would ask Google to crawl something we just told it to
+        // ignore. Same source of truth as the meta tag.
+        !isThinTagPage(page) &&
         (config.features?.showArchives !== false ||
           !page.endsWith("/archives/")),
     }),

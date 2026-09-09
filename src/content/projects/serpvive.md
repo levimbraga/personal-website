@@ -17,7 +17,7 @@ tags:
   - postgres
   - supabase
   - databases
-  - distributed-systems
+  - reliability
   - api-design
   - security
   - architecture

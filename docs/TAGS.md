@@ -65,7 +65,8 @@ An entry can carry tags from all four.
 | `databases` | Database concerns in general — modelling, indexing, querying. |
 | `testing` | Tests, test design, what is worth testing. |
 | `concurrency` | Threads, async, context, ordering. |
-| `distributed-systems` | Components on different machines over an unreliable network — partial failure, failover, timeouts. |
+| `distributed-systems` | Components on different machines coordinating — consensus, sharding, replication, ordering across nodes. |
+| `reliability` | Staying up when a dependency does not: failover, timeouts, retry policy, graceful degradation, kill switches, budget ceilings. |
 | `api-design` | Designing an interface others call, including internal abstractions. |
 | `security` | Attack surface and defence — authorisation, injection, sanitisation. |
 | `data-structures` | Data structures as a subject. |
@@ -91,7 +92,7 @@ This axis is what makes someone come back.
 
 ## Applied: SerpVive
 
-`typescript` `sql` `postgres` `supabase` `databases` `distributed-systems`
+`typescript` `sql` `postgres` `supabase` `databases` `reliability`
 `api-design` `security` `architecture` `measurement` `build-log`
 
 Each one checked against the repository, not against memory:
@@ -106,7 +107,18 @@ Each one checked against the repository, not against memory:
 | `measurement` | `cost_usd`, `tokens_input`, `processing_time_ms` logged per call; the page quotes real figures from them. |
 | `api-design` | The `AIProvider` interface in `src/lib/ai/providers.ts` — a real abstraction the four providers implement. |
 | `build-log` | The page is an account of building the thing. |
-| `distributed-systems` | **The loosest fit.** Justified by partial-failure handling across three external APIs — failover chain, per-attempt timeout, permanent-error classification. Not justified by consensus, sharding or replication, which the project has none of. |
+| `reliability` | The four-provider failover chain, the 120s per-attempt timeout, permanent-error classification, the four-step JSON repair ladder, `AI_DISABLED`, and a spend cap that fails open. Both failover levels have fired in production. |
+
+**`distributed-systems` was dropped.** It was applied first, then removed once
+`reliability` existed. Two reasons: it overclaimed — someone filtering for
+distributed systems wants consensus, sharding or replication, and this project
+has none — and once `reliability` names the failover work precisely, the
+broader tag added nothing but imprecision. It stays in the vocabulary because
+"The worker dies, the trace vanishes" earns it honestly: a worker process on
+another machine dying mid-trace is the real thing.
+
+The definition of `distributed-systems` was tightened at the same time, so the
+next entry has a sharper test to pass.
 
 **Not applied:** `performance` (latency is reported, but the project is not
 about speed), `testing` (it has no tests — that is a stated gap, not a
@@ -150,9 +162,30 @@ for. Say the word and it is a one-line addition.
 
 ---
 
-## Open: thin tag pages
+## Thin tag pages
 
-With one project and no posts, every tag page lists exactly one entry. See the
-trade-off discussion before deciding whether to `noindex` tag pages below a
-threshold. **Nothing is currently excluded** — tag pages are in the sitemap and
-indexable.
+A tag page carrying fewer than **2** entries is marked `noindex, follow` and
+left out of the sitemap. Above the threshold it is indexed normally. Nothing
+needs to be edited when a tag crosses the line — it is computed at build time.
+
+`follow` is deliberate: the page is not worth listing in search results, but
+the links on it still lead to entries that are.
+
+**Why at all.** With one project and no posts, every tag page lists exactly one
+thing — a heading and a link, with nothing to rank for. On an established site
+that would be a rounding error worth ignoring. On a domain with no history it
+is the first impression: eleven near-identical one-link pages next to nine real
+ones, at the moment first impressions are cheapest to control.
+
+**How it stays consistent.** The meta tag is decided from the content
+collections; the sitemap filter runs inside `astro.config.ts`, which cannot see
+collections and counts frontmatter off disk instead
+(`src/utils/tagIndexing.ts`). Two counts computed two ways is exactly how a
+page ends up `noindex` *and* listed in the sitemap — contradictory signals,
+worse than either choice alone. So the tag route asserts the two agree and
+**fails the build** if they diverge, with a message naming the tag and both
+counts. If that ever fires, the frontmatter rules in `tagIndexing.ts` have
+drifted from `postFilter()`.
+
+`/tags/` itself is always indexed. It is a real hub listing every tag, not a
+thin page.

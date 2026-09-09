@@ -13,6 +13,7 @@ import { getUniqueTags } from "@/utils/getUniqueTags";
 import { getSortedPosts } from "@/utils/getSortedPosts";
 import { getSortedProjects } from "@/utils/getSortedProjects";
 import { slugifyAll } from "@/utils/slugify";
+import { getTagCounts, TAG_INDEX_THRESHOLD } from "@/utils/tagIndexing";
 import { useTranslations } from "@/i18n";
 import config from "@/config";
 
@@ -30,6 +31,9 @@ export async function getStaticPaths({ paginate }: GetStaticPathsOptions) {
   const posts = await getCollection("posts", ({ data }) => !data.draft);
   const projects = await getCollection("projects", ({ data }) => !data.draft);
   const tags = getUniqueTags(posts, projects);
+  const fsTagCounts = getTagCounts({
+    scheduledPostMargin: config.posts.scheduledPostMargin,
+  });
 
   const lastTouched = (entry: Tagged) =>
     new Date(entry.data.modDatetime ?? entry.data.pubDatetime).getTime();
@@ -46,21 +50,48 @@ export async function getStaticPaths({ paginate }: GetStaticPathsOptions) {
       (a, b) => lastTouched(b) - lastTouched(a)
     );
 
+    /**
+     * The sitemap filter in astro.config.ts cannot see content collections, so
+     * it counts tags off the filesystem instead. Two counts computed two ways
+     * is how a page ends up `noindex` *and* listed in the sitemap — a worse
+     * signal than either alone — so assert here that they agree. If this ever
+     * throws, the frontmatter rules in tagIndexing.ts have drifted from
+     * postFilter().
+     */
+    const fsCount = fsTagCounts.get(tag) ?? 0;
+    if (fsCount !== entries.length) {
+      throw new Error(
+        `Tag "${tag}": collections say ${entries.length} entries, ` +
+          `filesystem scan says ${fsCount}. ` +
+          `src/utils/tagIndexing.ts has drifted from postFilter().`
+      );
+    }
+
     return paginate(entries, {
       params: { tag },
-      props: { tagName },
+      props: { tagName, entryCount: entries.length },
       pageSize: config.posts.perPage,
     });
   });
 }
 
-const { page, tagName } = Astro.props;
+const { page, tagName, entryCount } = Astro.props;
+
+/**
+ * A tag page with fewer than TAG_INDEX_THRESHOLD entries is kept out of search
+ * results and out of the sitemap. The same function decides both, so the two
+ * signals cannot contradict each other — see src/utils/tagIndexing.ts.
+ */
+const thin = entryCount < TAG_INDEX_THRESHOLD;
 
 const locale = Astro.currentLocale ?? config.site.lang;
 const t = useTranslations(locale);
 ---
 
-<Layout title={`${t.pages.tagTitle}: ${tagName} | ${config.site.title}`}>
+<Layout
+  title={`${t.pages.tagTitle}: ${tagName} | ${config.site.title}`}
+  noindex={thin}
+>
   <Header />
 
   <Breadcrumb />

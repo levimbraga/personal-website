@@ -20,6 +20,11 @@ type Props = {
    * <head> is silently ignored.
    */
   ogType?: "website" | "article";
+  /**
+   * Emit `noindex, follow`. `follow` is deliberate — the page is not worth
+   * listing, but the links on it still lead somewhere that is.
+   */
+  noindex?: boolean;
 };
 
 const { site } = config;
@@ -30,6 +35,7 @@ const {
   ogImage = resolveDefaultOgImagePath(config),
   canonicalURL = new URL(Astro.url.pathname, Astro.site).href,
   ogType = "website",
+  noindex = false,
 } = Astro.props;
 
 const socialImageURL = new URL(ogImage, Astro.site ?? Astro.url);
@@ -63,6 +69,7 @@ const rssHref = getAssetPath("rss.xml");
     />
     <link rel="apple-touch-icon" href={getAssetPath("apple-touch-icon.png")} />
     <link rel="canonical" href={canonicalURL} />
+    {noindex && <meta name="robots" content="noindex, follow" />}
     <meta name="generator" content={Astro.generator} />
 
     <!-- Font -->
