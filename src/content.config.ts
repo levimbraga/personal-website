@@ -16,6 +16,13 @@ const posts = defineCollection({
       featured: z.boolean().optional(),
       draft: z.boolean().optional(),
       tags: z.array(z.string()).default(["others"]),
+      /**
+       * Puts the post on /archives/. Curation, not chronology: the page lists
+       * what is marked, not everything that exists, so leaving this off is the
+       * normal case. With nothing marked the page and its nav entry disappear
+       * rather than rendering empty.
+       */
+      archived: z.boolean().optional(),
       ogImage: image().or(z.string()).optional(),
       description: z.string(),
       canonicalURL: z.string().optional(),

@@ -11,10 +11,18 @@ import IconMoon from "@/assets/icons/IconMoon.svg";
 import IconX from "@/assets/icons/IconX.svg";
 import LinkButton from "./LinkButton.astro";
 import { stripBase, stripLocale } from "@/utils/withBase";
+import { getArchivedPosts } from "@/utils/getArchivedPosts";
 import { useTranslations } from "@/i18n";
 import config from "@/config";
 
 const { features } = config;
+
+/**
+ * /archives/ is curated, so it can legitimately hold nothing — and the page
+ * itself rewrites to 404 in that case. Linking to it anyway would put a dead
+ * entry in the nav, so the link is gated on the same condition the page uses.
+ */
+const hasArchive = (await getArchivedPosts()).length > 0;
 
 const locale = Astro.currentLocale ?? config.site.lang;
 const t = useTranslations(locale);
@@ -161,7 +169,7 @@ const isActive = (path: string) => {
           </a>
         </li>
         {
-          features.showArchives && (
+          features.showArchives && hasArchive && (
             <li class="col-span-2">
               <LinkButton
                 href={getRelativeLocaleUrl(locale, "archives")}

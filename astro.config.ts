@@ -20,11 +20,20 @@ import { transformerFileName } from "./src/utils/transformers/fileName";
 import { remarkMermaid } from "./src/utils/remark/mermaid";
 import { rehypeExternalLinks } from "./src/utils/rehype/externalLinks";
 import { getTagCounts, TAG_INDEX_THRESHOLD } from "./src/utils/tagIndexing";
+import { getArchivedPostCount } from "./src/utils/archiveIndexing";
 import config from "./astro-paper.config";
 
 const tagCounts = getTagCounts({
   scheduledPostMargin: config.posts?.scheduledPostMargin,
 });
+
+// /archives/ lists only posts marked `archived: true`. With none marked the
+// page rewrites to 404 and drops out of the nav, so it must drop out of the
+// sitemap too — the same source of truth the page asserts against.
+const hasArchive =
+  getArchivedPostCount({
+    scheduledPostMargin: config.posts?.scheduledPostMargin,
+  }) > 0;
 
 /** `/tags/<slug>/` (and its paginated pages) for a tag with too few entries. */
 function isThinTagPage(page: string): boolean {
@@ -47,7 +56,7 @@ export default defineConfig({
         // the sitemap would ask Google to crawl something we just told it to
         // ignore. Same source of truth as the meta tag.
         !isThinTagPage(page) &&
-        (config.features?.showArchives !== false ||
+        ((config.features?.showArchives !== false && hasArchive) ||
           !page.endsWith("/archives/")),
     }),
   ],

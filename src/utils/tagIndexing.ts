@@ -1,7 +1,5 @@
-import fs from "node:fs";
-import path from "node:path";
-import { parse as parseYaml } from "yaml";
 import { slugifyStr } from "./slugify";
+import { scanPublished, POSTS_DIR, PROJECTS_DIR } from "./contentScan";
 
 /**
  * How many entries a tag needs before its page is worth indexing.
@@ -20,66 +18,26 @@ import { slugifyStr } from "./slugify";
 export const TAG_INDEX_THRESHOLD = 2;
 
 /**
- * Counts tags by reading content frontmatter straight off disk.
+ * Tag slug -> number of published entries carrying it.
  *
- * Why the filesystem rather than the content collections: this has to run in
- * two places that cannot share a runtime — the tag page, which has collections
- * available, and the sitemap filter in `astro.config.ts`, which does not.
- * Computing it twice from two different sources is how a page ends up
- * `noindex` *and* in the sitemap, which is a worse signal than either choice
- * on its own. So both callers use this one function.
- *
- * The draft and scheduling rules mirror `postFilter()`; keep them in step.
+ * Read off disk rather than from the content collections because the sitemap
+ * filter in `astro.config.ts` has no collections available — see
+ * `contentScan.ts` for why both callers must share one source.
  */
-type Frontmatter = {
-  tags?: string[];
-  draft?: boolean;
-  pubDatetime?: string | Date;
-};
-
-const CONTENT_DIRS = ["src/content/posts", "src/content/projects"];
-
-function readFrontmatter(file: string): Frontmatter | null {
-  const raw = fs.readFileSync(file, "utf-8");
-  const match = /^---\r?\n([\s\S]*?)\r?\n---/.exec(raw);
-  if (!match) return null;
-  try {
-    return parseYaml(match[1]) as Frontmatter;
-  } catch {
-    return null;
-  }
-}
-
-function isPublished(fm: Frontmatter, scheduledPostMargin: number): boolean {
-  if (fm.draft) return false;
-  if (!fm.pubDatetime) return true;
-  const due = new Date(fm.pubDatetime).getTime() - scheduledPostMargin;
-  return Date.now() > due;
-}
-
-/** Tag slug -> number of published entries carrying it. */
 export function getTagCounts({
   scheduledPostMargin = 15 * 60 * 1000,
   cwd = process.cwd(),
 } = {}): Map<string, number> {
   const counts = new Map<string, number>();
 
-  for (const dir of CONTENT_DIRS) {
-    const abs = path.join(cwd, dir);
-    if (!fs.existsSync(abs)) continue;
-
-    for (const entry of fs.readdirSync(abs, { withFileTypes: true })) {
-      // `_`-prefixed files are excluded from the collection loader too.
-      if (!entry.isFile() || entry.name.startsWith("_")) continue;
-      if (!/\.mdx?$/.test(entry.name)) continue;
-
-      const fm = readFrontmatter(path.join(abs, entry.name));
-      if (!fm || !isPublished(fm, scheduledPostMargin)) continue;
-
-      for (const tag of fm.tags ?? []) {
-        const slug = slugifyStr(tag);
-        counts.set(slug, (counts.get(slug) ?? 0) + 1);
-      }
+  for (const fm of scanPublished({
+    dirs: [POSTS_DIR, PROJECTS_DIR],
+    scheduledPostMargin,
+    cwd,
+  })) {
+    for (const tag of fm.tags ?? []) {
+      const slug = slugifyStr(tag);
+      counts.set(slug, (counts.get(slug) ?? 0) + 1);
     }
   }
 
