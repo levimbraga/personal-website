@@ -45,19 +45,23 @@ const isActive = (path: string) => {
 </a>
 
 <header
-  class="app-layout flex flex-col items-center justify-between sm:flex-row"
+  class="app-layout flex flex-col items-center justify-between md:flex-row"
 >
   <div
-    class="border-border bg-background relative flex w-full items-baseline justify-between border-b py-4 sm:items-center sm:py-6"
+    class="border-border bg-background relative flex w-full items-baseline justify-between border-b py-4 md:items-center md:py-6"
   >
     {
       /*
       The avatar, not a wordmark: the name is already the home page's <h1>, so
       repeating it in text added nothing, but the corner still wants an anchor.
 
-      Absolute on mobile and static from `sm` up, the same trick the wordmark
+      Absolute on mobile and static from `md` up, the same trick the wordmark
       used — the mobile nav is full-width, so an in-flow element here would be
       squeezed by it.
+
+      The switch is `md`, not `sm`: six nav items plus three icons need ~713px,
+      and at `sm` (640px) the row has 608px to put them in. It overflowed the
+      page silently in that band.
 
       The source is 538x448, so it is cropped to a square at build time with
       `fit="cover"` rather than being squashed. Cropping here instead of with
@@ -70,12 +74,12 @@ const isActive = (path: string) => {
 
       On mobile the row is `items-baseline`, which left the absolutely
       positioned avatar sitting ~6px below the centre of the menu button, so it
-      is centred explicitly there and handed back to the flex row from `sm` up.
+      is centred explicitly there and handed back to the flex row from `md` up.
     */
     }
     <a
       href={getRelativeLocaleUrl(locale, "")}
-      class="focus-outline absolute top-1/2 shrink-0 -translate-y-1/2 py-1 sm:static sm:my-auto sm:translate-y-0"
+      class="focus-outline absolute top-1/2 shrink-0 -translate-y-1/2 py-1 md:static md:my-auto md:translate-y-0"
     >
       <Image
         src={avatar}
@@ -84,17 +88,17 @@ const isActive = (path: string) => {
         height={128}
         fit="cover"
         position="center"
-        class="size-11 rounded-md sm:size-13"
+        class="size-11 rounded-md md:size-13"
         loading="eager"
       />
     </a>
     <nav
       id="nav-menu"
-      class="flex w-full flex-col items-center sm:ms-2 sm:flex-row sm:justify-end sm:space-x-4 sm:py-0"
+      class="flex w-full flex-col items-center md:ms-2 md:flex-row md:justify-end md:space-x-4 md:py-0"
     >
       <button
         id="menu-btn"
-        class="focus-outline self-end p-2 sm:hidden"
+        class="focus-outline self-end p-2 md:hidden"
         aria-label={t.a11y.openMenu}
         aria-expanded="false"
         aria-controls="menu-items"
@@ -106,7 +110,7 @@ const isActive = (path: string) => {
       </button>
       <ul
         id="menu-items"
-        class="[&>li>a]:hover:text-accent mt-4 hidden w-44 grid-cols-2 place-content-center gap-2 sm:mt-0 sm:flex sm:w-auto sm:gap-x-5 sm:gap-y-0 sm:[&>li]:h-8 [&>li>a]:block [&>li>a]:px-4 [&>li>a]:py-3 [&>li>a]:text-center [&>li>a]:font-medium sm:[&>li>a]:px-2 sm:[&>li>a]:py-1"
+        class="[&>li>a]:hover:text-accent mt-4 hidden w-44 grid-cols-2 place-content-center gap-2 md:mt-0 md:flex md:w-auto md:gap-x-4 md:gap-y-0 md:[&>li]:h-8 [&>li>a]:block [&>li>a]:px-4 [&>li>a]:py-3 [&>li>a]:text-center [&>li>a]:font-medium md:[&>li>a]:px-2 md:[&>li>a]:py-1"
       >
         <li class="col-span-1">
           <a
@@ -134,6 +138,14 @@ const isActive = (path: string) => {
         </li>
         <li class="col-span-1">
           <a
+            href={getRelativeLocaleUrl(locale, "tags")}
+            class:list={{ "active-nav": isActive("/tags") }}
+          >
+            {t.nav.tags}
+          </a>
+        </li>
+        <li class="col-span-1">
+          <a
             href={getRelativeLocaleUrl(locale, "resume")}
             class:list={{ "active-nav": isActive("/resume") }}
           >
@@ -154,18 +166,18 @@ const isActive = (path: string) => {
               <LinkButton
                 href={getRelativeLocaleUrl(locale, "archives")}
                 class:list={[
-                  "focus-outline flex size-full justify-center p-3 sm:relative sm:size-8 sm:p-0",
+                  "focus-outline flex size-full justify-center p-3 md:relative md:size-8 md:p-0",
                   { "active-nav": isActive("/archives") },
                 ]}
                 title={t.nav.archives}
                 aria-label={t.nav.archives}
               >
-                <IconArchive class="hidden sm:absolute sm:top-1/2 sm:left-1/2 sm:block sm:size-6 sm:-translate-x-1/2 sm:-translate-y-1/2" />
-                <span class="sm:sr-only">{t.nav.archives}</span>
+                <IconArchive class="hidden md:absolute md:top-1/2 md:left-1/2 md:block md:size-6 md:-translate-x-1/2 md:-translate-y-1/2" />
+                <span class="md:sr-only">{t.nav.archives}</span>
                 {isActive("/archives") && (
                   <IconUnderline
                     aria-hidden="true"
-                    class="scale-125 max-sm:hidden sm:absolute sm:bottom-0 sm:w-6"
+                    class="scale-125 max-md:hidden md:absolute md:bottom-0 md:w-6"
                   />
                 )}
               </LinkButton>
@@ -186,7 +198,7 @@ const isActive = (path: string) => {
                 {isActive("/search") && (
                   <IconUnderline
                     aria-hidden="true"
-                    class="absolute bottom-0 w-6 scale-125 max-sm:inset-s-2"
+                    class="absolute bottom-0 w-6 scale-125 max-md:inset-s-2"
                   />
                 )}
               </LinkButton>
@@ -198,7 +210,7 @@ const isActive = (path: string) => {
             <li class="col-span-1 flex items-center justify-center">
               <button
                 id="theme-btn"
-                class="focus-outline hover:[&>svg]:stroke-accent relative size-12 p-4 sm:size-8"
+                class="focus-outline hover:[&>svg]:stroke-accent relative size-12 p-4 md:size-8"
                 title={t.a11y.toggleTheme}
                 aria-label="auto"
                 aria-live="polite"
