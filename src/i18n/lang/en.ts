@@ -15,6 +15,10 @@ export default {
     archives: "Archives",
     search: "Search",
   },
+  card: {
+    post: "Post",
+    project: "Project",
+  },
   post: {
     publishedAt: "Published at",
     updatedAt: "Updated",
@@ -36,8 +40,12 @@ export default {
   home: {
     socialLinks: "Social Links",
     featured: "Featured",
-    recentPosts: "Recent Posts",
+    // The section mixes posts and projects, so the heading cannot name either.
+    // A bare "Recent" also avoids a category noun that would be vague
+    // ("work", "updates") or an enumeration ("Writing & projects").
+    recent: "Recent",
     allPosts: "All Posts",
+    allProjects: "All Projects",
   },
   footer: {
     copyright: "Copyright",

@@ -10,6 +10,11 @@ export interface UIStrings {
     archives: string;
     search: string;
   };
+  /** Singular labels shown on a list card, so a mixed list says which is which. */
+  card: {
+    post: string;
+    project: string;
+  };
   post: {
     publishedAt: string;
     updatedAt: string;
@@ -31,8 +36,9 @@ export interface UIStrings {
   home: {
     socialLinks: string;
     featured: string;
-    recentPosts: string;
+    recent: string;
     allPosts: string;
+    allProjects: string;
   };
   footer: {
     copyright: string;

@@ -2,6 +2,7 @@
 import type { CollectionEntry } from "astro:content";
 import { getProjectUrl } from "@/utils/getProjectPaths";
 import { toTransitionName } from "@/utils/toTransitionName";
+import { useTranslations } from "@/i18n";
 import Datetime from "./Datetime.astro";
 
 /**
@@ -24,6 +25,8 @@ const { title, description, summary, pubDatetime, modDatetime } = data;
 // `summary` is written for this list; `description` is written for search
 // results and is the fallback rather than the default.
 const blurb = summary ?? description;
+
+const t = useTranslations(Astro.currentLocale);
 ---
 
 <li class="my-6">
@@ -39,6 +42,10 @@ const blurb = summary ?? description;
       {title}
     </Heading>
   </a>
-  <Datetime {pubDatetime} {modDatetime} />
+  <div class="flex items-center gap-x-2">
+    <Datetime {pubDatetime} {modDatetime} />
+    <span aria-hidden="true" class="text-muted-foreground">|</span>
+    <span class="text-muted-foreground text-sm">{t.card.project}</span>
+  </div>
   <p>{blurb}</p>
 </li>

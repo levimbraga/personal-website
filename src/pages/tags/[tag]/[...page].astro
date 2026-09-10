@@ -1,31 +1,25 @@
 ---
-import { type CollectionEntry, getCollection } from "astro:content";
+import { getCollection } from "astro:content";
 import type { GetStaticPathsOptions } from "astro";
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Main from "@/components/Main.astro";
 import Breadcrumb from "@/components/Breadcrumb.astro";
-import Card from "@/components/Card.astro";
-import ProjectCard from "@/components/ProjectCard.astro";
+import EntryCard from "@/components/EntryCard.astro";
 import Footer from "@/components/Footer.astro";
 import Pagination from "@/components/Pagination.astro";
 import { getUniqueTags } from "@/utils/getUniqueTags";
-import { getSortedPosts } from "@/utils/getSortedPosts";
-import { getSortedProjects } from "@/utils/getSortedProjects";
+import { getSortedEntries, type Entry } from "@/utils/getSortedEntries";
 import { slugifyAll } from "@/utils/slugify";
 import { getTagCounts, TAG_INDEX_THRESHOLD } from "@/utils/tagIndexing";
 import { useTranslations } from "@/i18n";
 import config from "@/config";
 
-type Tagged = CollectionEntry<"posts"> | CollectionEntry<"projects">;
-
 /**
  * A tag page lists everything carrying that tag, from either collection.
  *
- * Posts and projects are interleaved by last-touched date rather than grouped,
- * because the tag is the subject and the collection is an implementation
- * detail of where the file lives. Both collections already sort by the same
- * rule, so merging them needs no special case.
+ * The merge and the ordering live in `getSortedEntries`, shared with the home
+ * page's Recent section, and the card dispatch in `EntryCard`.
  */
 export async function getStaticPaths({ paginate }: GetStaticPathsOptions) {
   const posts = await getCollection("posts", ({ data }) => !data.draft);
@@ -35,19 +29,13 @@ export async function getStaticPaths({ paginate }: GetStaticPathsOptions) {
     scheduledPostMargin: config.posts.scheduledPostMargin,
   });
 
-  const lastTouched = (entry: Tagged) =>
-    new Date(entry.data.modDatetime ?? entry.data.pubDatetime).getTime();
-
   return tags.flatMap(({ tag, tagName }) => {
-    const taggedPosts = getSortedPosts(
-      posts.filter(({ data }) => slugifyAll(data.tags).includes(tag))
-    );
-    const taggedProjects = getSortedProjects(
-      projects.filter(({ data }) => slugifyAll(data.tags).includes(tag))
-    );
+    const carriesTag = ({ data }: { data: { tags: string[] } }) =>
+      slugifyAll(data.tags).includes(tag);
 
-    const entries: Tagged[] = [...taggedProjects, ...taggedPosts].sort(
-      (a, b) => lastTouched(b) - lastTouched(a)
+    const entries = getSortedEntries(
+      posts.filter(carriesTag),
+      projects.filter(carriesTag)
     );
 
     /**
@@ -101,15 +89,7 @@ const t = useTranslations(locale);
     pageDesc={`${t.pages.tagDesc} "${tagName}".`}
   >
     <ul>
-      {
-        page.data.map((entry: Tagged) =>
-          entry.collection === "projects" ? (
-            <ProjectCard {...(entry as CollectionEntry<"projects">)} />
-          ) : (
-            <Card {...(entry as CollectionEntry<"posts">)} />
-          )
-        )
-      }
+      {page.data.map((entry: Entry) => <EntryCard {entry} />)}
     </ul>
   </Main>
 

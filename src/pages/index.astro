@@ -5,9 +5,9 @@ import IconArrowRight from "@/assets/icons/IconArrowRight.svg";
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
-import Card from "@/components/Card.astro";
+import EntryCard from "@/components/EntryCard.astro";
 import LinkButton from "@/components/LinkButton.astro";
-import { getSortedPosts } from "@/utils/getSortedPosts";
+import { getSortedEntries } from "@/utils/getSortedEntries";
 import { getAssetPath } from "@/utils/withBase";
 import { useTranslations } from "@/i18n";
 import config from "@/config";
@@ -17,10 +17,25 @@ const { socials, posts: postsConfig } = config;
 const locale = Astro.currentLocale ?? config.site.lang;
 const t = useTranslations(locale);
 
+/**
+ * Both collections, interleaved by date — a reader landing here wants the
+ * latest thing, and whether it was filed as a post or a project is not their
+ * problem. `getSortedEntries` is the same helper the tag pages use.
+ *
+ * The featured split runs over the merged list rather than over posts alone.
+ * If it did not, a project marked `featured` would show up in Featured *and*
+ * in Recent, because Recent is defined as "everything not featured".
+ */
 const posts = await getCollection("posts");
-const sortedPosts = getSortedPosts(posts);
-const featuredPosts = sortedPosts.filter(({ data }) => data.featured);
-const recentPosts = sortedPosts.filter(({ data }) => !data.featured);
+const projects = await getCollection("projects");
+const entries = getSortedEntries(posts, projects);
+const featuredEntries = entries.filter(({ data }) => data.featured);
+const recentEntries = entries.filter(({ data }) => !data.featured);
+
+// Derived from the merged list, not from the raw collections: a blog holding
+// nothing but drafts must not put an "All Posts" link under the section.
+const hasPosts = entries.some(entry => entry.collection === "posts");
+const hasProjects = entries.some(entry => entry.collection === "projects");
 const homePath = getRelativeLocaleUrl(locale, "");
 
 // Inline prose links: the theme's own hero link styling, kept in one place so
@@ -74,17 +89,17 @@ const personStructuredData = {
   >
     {
       /*
-      The bottom border only earns its place when there is a posts section
-      below it. With an empty blog the sign-off's own top border sits directly
-      underneath, and the two render as a double rule. The theme already gates
-      the featured section's border the same way.
+      The bottom border only earns its place when there is a Recent section
+      below it. With nothing published the sign-off's own top border sits
+      directly underneath, and the two render as a double rule. The theme
+      already gates the featured section's border the same way.
     */
     }
     <section
       id="hero"
       class:list={[
         "border-border pt-8 pb-6",
-        { "border-b": sortedPosts.length > 0 },
+        { "border-b": entries.length > 0 },
       ]}
     >
       <h1 class="my-4 inline-block text-4xl font-bold sm:my-8 sm:text-5xl">
@@ -129,20 +144,20 @@ const personStructuredData = {
     </section>
 
     {
-      featuredPosts.length > 0 && (
+      featuredEntries.length > 0 && (
         <section
           id="featured"
           class:list={[
             "pt-12 pb-6",
-            { "border-border border-b": recentPosts.length > 0 },
+            { "border-border border-b": recentEntries.length > 0 },
           ]}
         >
           <h2 class="text-2xl font-semibold tracking-wide">
             {t.home.featured}
           </h2>
           <ul>
-            {featuredPosts.map(data => (
-              <Card variant="h3" {...data} />
+            {featuredEntries.map(entry => (
+              <EntryCard {entry} variant="h3" />
             ))}
           </ul>
         </section>
@@ -150,14 +165,12 @@ const personStructuredData = {
     }
 
     {
-      recentPosts.length > 0 && (
-        <section id="recent-posts" class="pt-12 pb-6">
-          <h2 class="text-2xl font-semibold tracking-wide">
-            {t.home.recentPosts}
-          </h2>
+      recentEntries.length > 0 && (
+        <section id="recent" class="pt-12 pb-6">
+          <h2 class="text-2xl font-semibold tracking-wide">{t.home.recent}</h2>
           <ul>
-            {recentPosts.slice(0, postsConfig.perIndex).map(data => (
-              <Card variant="h3" {...data} />
+            {recentEntries.slice(0, postsConfig.perIndex).map(entry => (
+              <EntryCard {entry} variant="h3" />
             ))}
           </ul>
         </section>
@@ -165,12 +178,28 @@ const personStructuredData = {
     }
 
     {
-      sortedPosts.length > 0 && (
-        <div class="my-8 text-center">
-          <LinkButton href={getRelativeLocaleUrl(locale, "posts")}>
-            {t.home.allPosts}
-            <IconArrowRight class="inline-block rtl:-rotate-180" />
-          </LinkButton>
+      /*
+      One link per collection, because the list above spans both and a single
+      "All Posts" under it would promise an index that does not contain half of
+      what the reader just saw. Each is gated on its own collection having
+      anything in it, so an empty one leaves no dead link behind.
+    */
+    }
+    {
+      entries.length > 0 && (
+        <div class="my-8 flex flex-wrap items-center justify-center gap-x-8 gap-y-4">
+          {hasPosts && (
+            <LinkButton href={getRelativeLocaleUrl(locale, "posts")}>
+              {t.home.allPosts}
+              <IconArrowRight class="inline-block rtl:-rotate-180" />
+            </LinkButton>
+          )}
+          {hasProjects && (
+            <LinkButton href={getRelativeLocaleUrl(locale, "projects")}>
+              {t.home.allProjects}
+              <IconArrowRight class="inline-block rtl:-rotate-180" />
+            </LinkButton>
+          )}
         </div>
       )
     }

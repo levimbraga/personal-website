@@ -1,0 +1,28 @@
+---
+import type { CollectionEntry } from "astro:content";
+import type { Entry } from "@/utils/getSortedEntries";
+import Card from "./Card.astro";
+import ProjectCard from "./ProjectCard.astro";
+
+/**
+ * Renders one entry from either collection with the right card.
+ *
+ * The dispatch lived inline on the tag page until the home page needed the
+ * same thing. Two copies of a ternary on `entry.collection` is how one of them
+ * ends up rendering a project through the post card and linking to /posts/.
+ */
+type Props = {
+  entry: Entry;
+  variant?: "h2" | "h3";
+};
+
+const { entry, variant } = Astro.props;
+---
+
+{
+  entry.collection === "projects" ? (
+    <ProjectCard {variant} {...(entry as CollectionEntry<"projects">)} />
+  ) : (
+    <Card {variant} {...(entry as CollectionEntry<"posts">)} />
+  )
+}
