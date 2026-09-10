@@ -24,6 +24,7 @@ tags:
   - measurement
   - build-log
 ---
+[SerpVive Website](https://serpvive.com)
 
 **A content decay monitor for blogs.** It connects to Google Search Console,
 detects which pages are losing organic traffic using a deterministic scoring
