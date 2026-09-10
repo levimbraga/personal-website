@@ -66,8 +66,7 @@ export default {
     projectsDesc: "Things I've built, and what I learned building them.",
 
     archivesTitle: "Archives",
-    archivesDesc:
-      "Posts I've chosen to keep. Not everything I've written ends up here.",
+    archivesDesc: "Every post on the site, grouped by year and month.",
 
     searchTitle: "Search",
     searchDesc: "Search any article ...",

@@ -47,7 +47,6 @@ author: Levi Maia Braga                    # optional — defaults to site.autho
 slug: custom-url-segment                   # optional — defaults to the filename
 featured: true                             # optional — pins to the home page
 draft: true                                # optional — excluded from the build
-archived: true                             # optional — puts the post on /archives/
 tags: [python, postgres]                   # optional — defaults to ["others"]
 ogImage: "@/assets/images/cover.png"       # optional — or a remote URL
 canonicalURL: https://elsewhere.com/x      # optional — only if first published elsewhere
@@ -65,11 +64,6 @@ Notes worth having:
   exists.
 - **`ogImage`** accepts `@/assets/...` or a remote URL. Omit it and one is
   generated per post at `/posts/<slug>/index.png`. ✅ Verified.
-- **`archived: true`** is the only way a post reaches `/archives/`. The page is
-  curated, not chronological — it lists what is marked, not everything that
-  exists, so leaving this off is the normal case. ✅ Verified. With nothing
-  marked, the page rewrites to 404, drops out of the nav and out of the
-  sitemap: an empty archive is worse than no archive.
 - **`canonicalURL`** is for content first published somewhere else. Setting it
   otherwise tells Google to rank the other URL instead of yours.
 - **Do not change `slug` after publishing.** It is the URL; changing it breaks

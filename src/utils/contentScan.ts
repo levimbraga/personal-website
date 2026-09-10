@@ -20,7 +20,6 @@ import { parse as parseYaml } from "yaml";
 export type Frontmatter = {
   tags?: string[];
   draft?: boolean;
-  archived?: boolean;
   pubDatetime?: string | Date;
 };
 

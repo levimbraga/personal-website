@@ -6,8 +6,8 @@ import Breadcrumb from "@/components/Breadcrumb.astro";
 import Main from "@/components/Main.astro";
 import Footer from "@/components/Footer.astro";
 import Card from "@/components/Card.astro";
-import { getArchivedPosts } from "@/utils/getArchivedPosts";
-import { getArchivedPostCount } from "@/utils/archiveIndexing";
+import { getPublishedPosts } from "@/utils/getPublishedPosts";
+import { getPublishedPostCount } from "@/utils/archiveIndexing";
 import { getPostsByGroupCondition } from "./_utils/getPostsByGroupCondition";
 import { useTranslations } from "@/i18n";
 import config from "@/config";
@@ -15,31 +15,31 @@ import config from "@/config";
 const locale = Astro.currentLocale ?? config.site.lang;
 const notFoundUrl = getRelativeLocaleUrl(locale, "404");
 
-const archivedPosts = await getArchivedPosts();
-
 /**
+ * Every published post, grouped by year and month. Automatic: a post is here
+ * because it exists, which is what an archive is.
+ *
  * The sitemap filter in astro.config.ts has no content collections, so it
- * counts archived posts off the filesystem. Two counts computed two ways is
- * how this page ends up rewriting to 404 while the sitemap still advertises
- * it, so assert they agree — the same guard the tag route uses.
+ * counts posts off the filesystem. Two counts computed two ways is how this
+ * page ends up rewriting to 404 while the sitemap still advertises it, so
+ * assert they agree — the same guard the tag route uses.
  */
-const fsCount = getArchivedPostCount({
+const posts = await getPublishedPosts();
+
+const fsCount = getPublishedPostCount({
   scheduledPostMargin: config.posts.scheduledPostMargin,
 });
-if (fsCount !== archivedPosts.length) {
+if (fsCount !== posts.length) {
   throw new Error(
-    `Archives: collections say ${archivedPosts.length} posts, ` +
+    `Archives: collections say ${posts.length} posts, ` +
       `filesystem scan says ${fsCount}. ` +
       `src/utils/archiveIndexing.ts has drifted from postFilter().`
   );
 }
 
-// Off by config, or nothing marked. An empty archive is worse than no archive:
-// the nav entry disappears the same way, so the page must not be reachable.
-if (
-  (!config.features.showArchives || archivedPosts.length === 0) &&
-  notFoundUrl
-) {
+// Off by config, or an empty blog. An empty index is worse than no index: the
+// nav entry disappears the same way, so the page must not be reachable.
+if ((!config.features.showArchives || posts.length === 0) && notFoundUrl) {
   return Astro.rewrite(notFoundUrl);
 }
 
@@ -56,7 +56,7 @@ const monthFormatter = new Intl.DateTimeFormat(locale, { month: "long" });
   <Main pageTitle={t.pages.archivesTitle} pageDesc={t.pages.archivesDesc}>
     {
       Object.entries(
-        getPostsByGroupCondition(archivedPosts, post =>
+        getPostsByGroupCondition(posts, post =>
           post.data.pubDatetime.getFullYear()
         )
       )

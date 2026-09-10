@@ -28,7 +28,6 @@ never built and never published. Copy it, drop the underscore, and edit.
 | `featured`     | no       | `true` pins the post to the Featured section on the home page.         |
 | `draft`        | no       | `true` keeps the post out of the build entirely.                       |
 | `tags`         | no       | Defaults to `["others"]`. Each tag gets its own indexable page.        |
-| `archived`     | no       | `true` puts the post on /archives/, which is curated, not automatic.   |
 | `ogImage`      | no       | Per-post social image. Omit it and one is generated automatically.     |
 | `canonicalURL` | no       | Only for content first published somewhere else.                       |
 | `timezone`     | no       | Overrides `site.timezone` for this post's dates.                       |
