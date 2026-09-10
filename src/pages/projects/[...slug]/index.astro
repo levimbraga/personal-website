@@ -4,12 +4,14 @@ import ProjectLayout from "@/layouts/ProjectLayout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import Datetime from "@/components/Datetime.astro";
+import Tag from "@/components/Tag.astro";
 import ShareLinks from "@/components/ShareLinks.astro";
 import BackButton from "@/components/BackButton.astro";
 import BackToTopButton from "@/components/BackToTopButton.astro";
 import AdjacentNav from "@/components/AdjacentNav.astro";
 import ArticleEnhancements from "@/components/ArticleEnhancements.astro";
 import { getProjectSlug, getProjectUrl } from "@/utils/getProjectPaths";
+import { slugifyStr } from "@/utils/slugify";
 import { getSortedProjects } from "@/utils/getSortedProjects";
 import { toTransitionName } from "@/utils/toTransitionName";
 import config from "@/config";
@@ -21,7 +23,9 @@ import config from "@/config";
  *
  * Two things differ, and both are content rather than form: the meta row
  * carries repository links where a post carries an edit link, and the stack
- * sits where a post's tags sit. Anything else drifting apart is a bug.
+ * line sits above the tags, which a post has no equivalent of. The tag list
+ * itself is the post's, in the post's position. Anything else drifting apart
+ * is a bug.
  */
 export async function getStaticPaths() {
   const projects = getSortedProjects(await getCollection("projects"));
@@ -68,6 +72,7 @@ const {
   repo,
   url,
   tech,
+  tags,
   pubDatetime,
   modDatetime,
   ogImage: initOgImage,
@@ -188,6 +193,24 @@ const stack = [status, ...tech].filter(Boolean);
     <ul class="mt-4 mb-8 flex flex-wrap gap-4 sm:my-8">
       {stack.map(item => <li class="text-muted-foreground text-sm">{item}</li>)}
     </ul>
+
+    {
+      /*
+       * The post page's tag list, unchanged and in the same position. Guarded
+       * because a project's `tags` defaults to an empty array where a post's
+       * defaults to ["others"], and an empty <ul> here is margin with nothing
+       * in it.
+       */
+    }
+    {
+      tags.length > 0 && (
+        <ul class="mt-4 mb-8 flex flex-wrap gap-4 sm:my-8">
+          {tags.map(tag => (
+            <Tag tag={slugifyStr(tag)} tagName={tag} size="sm" />
+          ))}
+        </ul>
+      )
+    }
 
     <ShareLinks />
 
