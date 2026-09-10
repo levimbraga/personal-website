@@ -18,6 +18,7 @@ import {
 } from "@shikijs/transformers";
 import { transformerFileName } from "./src/utils/transformers/fileName";
 import { remarkMermaid } from "./src/utils/remark/mermaid";
+import { rehypeExternalLinks } from "./src/utils/rehype/externalLinks";
 import { getTagCounts, TAG_INDEX_THRESHOLD } from "./src/utils/tagIndexing";
 import config from "./astro-paper.config";
 
@@ -66,7 +67,7 @@ export default defineConfig({
         remarkToc,
         [remarkCollapse, { test: "Table of contents" }],
       ],
-      rehypePlugins: [rehypeCallouts],
+      rehypePlugins: [rehypeCallouts, rehypeExternalLinks],
     }),
     shikiConfig: {
       themes: { light: "min-light", dark: "night-owl" },

@@ -19,6 +19,7 @@ is expensive.
 - [Code blocks and Shiki](#code-blocks-and-shiki)
 - [Diagrams](#diagrams)
 - [Table of contents](#table-of-contents)
+- [Links](#links)
 - [Images](#images)
 - [Tables](#tables)
 - [Footnotes](#footnotes)
@@ -264,6 +265,41 @@ a `<details>` so it starts closed. Nothing else needed.
 **When it is worth it:** a long reference post someone will scan. **When it is
 not:** anything under four headings — an empty-looking disclosure triangle at
 the top of a short post is just noise.
+
+---
+
+## Links
+
+✅ **Verified** — write plain Markdown; the build decides the target.
+
+```md
+[An external site](https://example.com)   → opens in a new tab
+[A project](/projects/serpvive/)          → same tab
+[A heading on this page](#links)          → same tab
+[Email me](mailto:levimaiabraga@gmail.com) → same tab, hands off to the mail client
+```
+
+A local rehype plugin — `src/utils/rehype/externalLinks.ts` — adds
+`target="_blank" rel="noopener noreferrer"` to every link that leaves the site.
+"Leaves the site" means an absolute `http(s)` URL whose host is not
+`site.url`'s host, so `https://levimbraga.dev/posts/x` written in full still
+counts as internal.
+
+`rel="noopener"` is the security half: without it the opened page gets a
+`window.opener` handle back to ours and can navigate it. `noreferrer` also
+withholds the referrer.
+
+Two things it deliberately does **not** touch:
+
+- **Raw `<a>` written as HTML in a post.** Astro does not parse raw HTML in
+  Markdown into elements, so the plugin never sees it. Write the attributes
+  yourself, or use Markdown syntax.
+- **JSX `<a>` in an `.mdx` file** — same reason: it is an MDX element node, not
+  an HTML one. Markdown `[text](url)` inside MDX *is* handled.
+
+It applies to posts and project pages alike, because both go through the same
+Markdown pipeline. It does not apply to links in the layout — the header,
+footer and social icons set their own attributes.
 
 ---
 

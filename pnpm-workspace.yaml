@@ -1,3 +1,11 @@
 allowBuilds:
   esbuild: true
   sharp: true
+
+# One copy of @types/hast. The markdown pipeline (`@astrojs/markdown-remark`)
+# pulls its own, and two structurally identical copies of the hast `Root` type
+# are not assignable to each other — `astro check` fails on the rehype plugin
+# in `src/utils/rehype/externalLinks.ts` with a wall of "Element is not
+# assignable to Element".
+overrides:
+  "@types/hast": "3.0.5"

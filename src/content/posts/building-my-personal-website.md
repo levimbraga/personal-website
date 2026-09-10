@@ -12,6 +12,7 @@ tags:
   - tooling
 description: "An introduction to who I am, and how I built this site with Astro Paper."
 ---
+
 Hello! My name is Levi Maia Braga, I'm a computer science student in São Paulo, Brazil. I'm interested in backend systems, Python, Linux, databases, developer tools, and the offensive side of security.
 
 Right now I'm working through data structures and algorithms every day, and planning [Ormaos](https://ormaos.com), a tool for understanding what happens inside a Python execution. It's going to be my first big project and it's also going to be open source, so I'm really excited.
