@@ -73,6 +73,17 @@ shape they borrow.
 That is the whole output of one paid call. The rest of this page is how it gets
 there, and what it costs.
 
+**There are two ways in, and the report above is only the first.** That one
+starts from Search Console: the engine flags a decaying page, and diagnosing it
+is a deliberate second step against history the system already holds. The other
+takes a URL that nothing is monitoring — `api/analyze-url` accepts
+`{ url, keyword }` and nothing else, with no property to verify and no months
+of data to ingest first. The two are sibling functions in the same module,
+`runDiagnosisPipeline` and `runExternalPipeline`, and they diverge where you
+would expect: the standalone one runs a different prompt, because there is no
+traffic history to explain a decline from. It is how someone evaluates the tool
+before connecting anything to it.
+
 ---
 
 ## The problem, and where I drew the line
