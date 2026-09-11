@@ -24,6 +24,7 @@ tags:
   - measurement
   - build-log
 ---
+
 [SerpVive Website](https://serpvive.com)
 
 **A content decay monitor for blogs.** It connects to Google Search Console,
@@ -32,7 +33,47 @@ engine, and then — only for the one step that genuinely needs judgement — us
 language model to diagnose _why_, grounded in the live search results and the
 page's actual content.
 
-![A SerpVive diagnosis: content analysis grounded in the live SERP, with topic coverage scoring and per-cause evidence](@/assets/images/serpvive-diagnosis.png)
+## What a diagnosis actually returns
+
+Three screenshots below are one report, read top to bottom — not three examples.
+This is the sample analysis the product serves on its own landing page.
+
+> [!NOTE] About this data
+> It is a real run against a live blog post, not a mockup. The analysed page
+> appears as a path only — `/blog/jade-plant-care-guide` — so the site being
+> diagnosed stays anonymous. The competitor domains are real, named exactly as
+> the model named them, and were already public before this page existed.
+
+**The head of the report** is the arithmetic and the summary. One click in
+twenty-eight days against 174 impressions at average position #54 — that is the
+deterministic engine's output, and it costs nothing. Everything below it is the
+part that needed a model.
+
+![The top of a SerpVive report: the page path and keyword, clicks, impressions and average position for the last 28 days, a prose summary of the SERP, a topic-coverage bar at 14 of 16, and four bullet points listing what the page already does better than its competitors](@/assets/images/serpvive-analysis-overview.png)
+
+Topic coverage is the one number I would point at. 14 of 16 means the model
+enumerated sixteen subtopics the ranking pages collectively cover and found two
+missing from this one — and it says which two, with the competitor that owns
+each.
+
+**The causes are ranked and every one carries its evidence.** Five of them,
+High through Low, and each closes with an `Evidence:` line stating the counts
+the judgement rests on. That line is the part I care about: a claim like "low
+internal linking" is worthless without "yours 16, theirs 43, 50 and 27".
+
+![Five ranked causes from a SerpVive report, each with a coloured severity bar and a High, Medium or Low badge: search intent mismatch, low internal linking, an over-long title tag, no video content, and external links pointing only to affiliate pages — every one followed by an italic Evidence line citing specific counts](@/assets/images/serpvive-analysis-causes.png)
+
+**The refresh brief turns the diagnosis into work.** Each action is estimated in
+minutes and typed by what it touches, and the urgent one expands into a
+micro-draft — three concrete title rewrites, with the competitor whose title
+shape they borrow.
+
+![The Refresh Brief section of a SerpVive report: four actions totalling an estimated four hours, the urgent one expanded to show three suggested title rewrites in monospace with a reference line, and three collapsed actions labelled Important, Important and Nice to have](@/assets/images/serpvive-refresh-brief.png)
+
+That is the whole output of one paid call. The rest of this page is how it gets
+there, and what it costs.
+
+---
 
 ## The problem, and where I drew the line
 
@@ -189,14 +230,33 @@ function isNonRetryable(error: string): boolean {
     lower.includes("401") ||
     lower.includes("403") ||
     lower.includes("invalid_api_key") ||
+    lower.includes("invalid api key") ||
+    lower.includes("incorrect api key") ||
     lower.includes("authentication") ||
     lower.includes("permission denied") ||
+    lower.includes("model_not_found") ||
+    lower.includes("model not found") ||
+    lower.includes("not set") || // [!code highlight]
     lower.includes("billing") ||
     lower.includes("quota exceeded") ||
+    lower.includes("invalid_request") ||
     lower.includes("400")
   );
 }
 ```
+
+Fourteen substring tests, which is the honest shape of it: the providers do not
+agree on an error taxonomy, so the classifier matches strings against their
+messages. It is the least elegant code on this page and I am not going to
+dress it up.
+
+`"not set"` is highlighted because it is the one that catches a bug rather than
+an outage. Each provider reads its own key inside `call()`, not at construction
+— `providers/openai.ts` throws `"OPENAI_API_KEY not set"` there, `gemini.ts`
+the equivalent. `getDiagnosisChain()` is supposed to have excluded those
+providers already, so if that error ever reaches the classifier the two
+disagree about what is configured. Treating it as permanent means the chain
+skips the slot instead of timing out against it.
 
 **Both levels have fired in production.** One diagnosis of eleven completed on
 Sonnet after Opus failed — a same-provider fallback. Separately, Gemini hit its
@@ -394,9 +454,15 @@ npm run dev   # http://localhost:3000
 
 ### The environment
 
-Every variable is in `.env.example`, and the file is complete — I checked each
-one the code reads against what the file declares. The ones that decide whether
-the app boots at all:
+I checked this the only way worth checking it: every `process.env.X` in the
+source, against every line the file declares. **Nothing the code reads is
+missing.** The gap runs the other way — `.env.example` declares
+`NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, and `docs/ARCHITECTURE.md` repeats it,
+but no line of the application reads it. Checkout is server-side through
+`stripe/checkout`; the publishable key is a leftover. Anyone setting the
+project up would go and fetch a key they do not need.
+
+The ones that decide whether the app boots at all:
 
 | Variable                                                          | Purpose                                                                                          |
 | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
