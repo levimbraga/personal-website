@@ -15,7 +15,7 @@ description: "An introduction to who I am, and how I built this site with Astro 
 
 Hello! My name is Levi Maia Braga, I'm a computer science student in São Paulo, Brazil. I'm interested in backend systems, Python, Linux, databases, developer tools, and the offensive side of security.
 
-Right now I'm working through data structures and algorithms every day, and planning [Ormaos](https://ormaos.com), a tool for understanding what happens inside a Python execution. It's going to be my first big project and it's also going to be open source, so I'm really excited.
+Right now I'm working through data structures and algorithms every day, and planning [Ormaos](https://ormaos.com), a tool for understanding what happens inside a Python execution. It's going to be my first big project and it's also going to be open source, so I'm really excited. My biggest inspirations as a builder are Sentry, Stripe, Vercel and Supabase. I think these companies built something really great, and they're the reason I want to create my own dev tool someday.
 
 After finding some personal sites while looking at LinkedIn profiles, I decided that I would also create one for myself. The objective was to show a little more about me, what I like, the projects I build and the blog posts I write. Another thing is the freedom that comes with creating your own website, you can do literally ANYTHING! Which is quite nice \\(ᵔᵕᵔ)/
 
