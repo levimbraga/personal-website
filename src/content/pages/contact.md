@@ -27,6 +27,6 @@ Feel free to reach out on any of these about anything, or connect with me on
 
 <!--email_off-->
 
-- **Email** — [levimaiabraga@gmail.com](mailto:levimaiabraga@gmail.com)
+- **Email** — [levi@ormaos.com](mailto:levi@ormaos.com)
 
 <!--/email_off-->

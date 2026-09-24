@@ -276,7 +276,7 @@ the top of a short post is just noise.
 [An external site](https://example.com)   → opens in a new tab
 [A project](/projects/serpvive/)          → same tab
 [A heading on this page](#links)          → same tab
-[Email me](mailto:levimaiabraga@gmail.com) → same tab, hands off to the mail client
+[Email me](mailto:levi@ormaos.com) → same tab, hands off to the mail client
 ```
 
 A local rehype plugin — `src/utils/rehype/externalLinks.ts` — adds

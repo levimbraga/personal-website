@@ -35,7 +35,7 @@ export default defineAstroPaperConfig({
     { name: "github", url: "https://github.com/levimbraga" },
     { name: "linkedin", url: "https://www.linkedin.com/in/levimbraga/" },
     { name: "x", url: "https://x.com/levimbraga" },
-    { name: "mail", url: "mailto:levimaiabraga@gmail.com" },
+    { name: "mail", url: "mailto:levi@ormaos.com" },
   ],
   shareLinks: [
     { name: "x", url: "https://x.com/intent/post?url=" },
