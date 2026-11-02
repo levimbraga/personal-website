@@ -3,7 +3,7 @@ title: "Resume"
 description: "Levi Maia Braga's resume — view it in the browser or download the PDF."
 ---
 
-Last updated: **September 9, 2026**
+Last updated: **October 29, 2026**
 
 <p>
   <a
